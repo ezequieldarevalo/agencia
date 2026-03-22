@@ -109,9 +109,9 @@ export default function IntegrationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Integraciones</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Integraciones</h1>
           <p className="text-gray-400 text-sm mt-1">
             Conectá tu agencia con las plataformas más importantes
           </p>
@@ -129,8 +129,8 @@ export default function IntegrationsPage() {
       <div className="grid grid-cols-1 gap-6">
         {integrations.map((integration) => (
           <Card key={integration.id}>
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div className="flex items-start gap-3 sm:gap-4">
                 <div
                   className={`w-12 h-12 ${integration.color} rounded-xl flex items-center justify-center flex-shrink-0`}
                 >
@@ -172,7 +172,7 @@ export default function IntegrationsPage() {
       </div>
 
       {/* Stats summary */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <div className="text-center">
             <p className="text-3xl font-bold text-blue-400">

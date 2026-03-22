@@ -95,12 +95,12 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Configuraciones</h1>
+      <h1 className="text-xl sm:text-2xl font-bold">Configuraciones</h1>
 
       {/* Integrations */}
       <Card>
         <h2 className="text-lg font-semibold mb-4">Integraciones</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <div className="flex items-center justify-between bg-gray-800 rounded-lg p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -161,7 +161,7 @@ export default function SettingsPage() {
         {/* Basic Info */}
         <Card>
           <h2 className="text-lg font-semibold mb-4">Información Básica</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             <Input label="Nombre de la Agencia" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <Input label="CUIT" value={form.cuit} onChange={(e) => setForm({ ...form, cuit: e.target.value })} />
@@ -172,7 +172,7 @@ export default function SettingsPage() {
         {/* Location */}
         <Card>
           <h2 className="text-lg font-semibold mb-4">Ubicación</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select label="Provincia" value={form.province} onChange={(e) => setForm({ ...form, province: e.target.value })} options={PROVINCES.map((p) => ({ value: p, label: p }))} />
             <Input label="Ciudad" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
             <Input label="Calle" value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} />
@@ -183,7 +183,7 @@ export default function SettingsPage() {
         {/* Image & Schedule */}
         <Card>
           <h2 className="text-lg font-semibold mb-4">Imagen y Horarios</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Logo de la Agencia</label>
               <div className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center text-gray-500">

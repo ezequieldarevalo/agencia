@@ -182,7 +182,7 @@ export default function MetaIntegrationPage() {
           <Globe size={20} className="text-white" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">Meta</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Meta</h1>
           <p className="text-gray-400 text-sm">Facebook & Instagram</p>
         </div>
         <Badge variant={status.connected ? "success" : "default"} className="ml-2">
@@ -227,7 +227,7 @@ export default function MetaIntegrationPage() {
 
       {/* Quick Actions */}
       {status.connected && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card>
             <button
               onClick={() => { setPublishPlatform("FACEBOOK"); setShowPublish(true); }}

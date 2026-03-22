@@ -70,7 +70,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">Dashboard</h1>
         <div className="flex items-center gap-2">
           <select
             value={year}
@@ -85,7 +85,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           title="Operaciones del mes"
           value={data.stats.totalOps.toString()}
@@ -109,7 +109,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Operaciones Mensuales */}
         <Card>
           <div className="flex items-center justify-between mb-4">
@@ -124,7 +124,7 @@ export default function DashboardPage() {
               </Button>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250}>
             <BarChart data={data.monthlyOps}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="month" stroke="#9CA3AF" fontSize={12} />
@@ -157,7 +157,7 @@ export default function DashboardPage() {
               USD
             </Button>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250}>
             <LineChart data={data.profitability}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="month" stroke="#9CA3AF" fontSize={12} />
@@ -197,22 +197,22 @@ export default function DashboardPage() {
       <Card>
         <h2 className="text-lg font-semibold mb-4">Detalle del mes</h2>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[500px]">
             <thead>
               <tr className="border-b border-gray-800">
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Vehículo</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">Costo</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">Ingreso</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">Utilidad</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Vehículo</th>
+                <th className="px-3 sm:px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">Costo</th>
+                <th className="px-3 sm:px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">Ingreso</th>
+                <th className="px-3 sm:px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">Utilidad</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
               {data.details.map((d, i) => (
                 <tr key={i} className="hover:bg-gray-800/50">
-                  <td className="px-4 py-3 text-sm text-gray-300">{d.vehicle}</td>
-                  <td className="px-4 py-3 text-sm text-gray-300 text-right">{formatCurrency(d.cost)}</td>
-                  <td className="px-4 py-3 text-sm text-gray-300 text-right">{formatCurrency(d.income)}</td>
-                  <td className="px-4 py-3 text-sm text-green-400 text-right font-medium">
+                  <td className="px-3 sm:px-4 py-3 text-sm text-gray-300 whitespace-nowrap">{d.vehicle}</td>
+                  <td className="px-3 sm:px-4 py-3 text-sm text-gray-300 text-right whitespace-nowrap">{formatCurrency(d.cost)}</td>
+                  <td className="px-3 sm:px-4 py-3 text-sm text-gray-300 text-right whitespace-nowrap">{formatCurrency(d.income)}</td>
+                  <td className="px-3 sm:px-4 py-3 text-sm text-green-400 text-right font-medium whitespace-nowrap">
                     {formatCurrency(d.profit)}
                   </td>
                 </tr>

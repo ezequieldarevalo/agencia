@@ -191,8 +191,8 @@ export default function CalendarPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Agenda</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold">Agenda</h1>
         <div className="flex items-center gap-2">
           <div className="flex bg-gray-800 rounded-lg p-0.5">
             <button onClick={() => setView("month")} className={`px-3 py-1 rounded-md text-sm ${view === "month" ? "bg-gray-700 text-white" : "text-gray-400"}`}>Mes</button>
@@ -205,9 +205,9 @@ export default function CalendarPage() {
       </div>
 
       {view === "month" ? (
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Calendar */}
-          <div className="col-span-3">
+          <div className="lg:col-span-3">
             <Card>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -405,7 +405,7 @@ export default function CalendarPage() {
           />
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Tipo</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {EVENT_TYPES.map((t) => (
                 <button
                   key={t.value}
@@ -423,11 +423,11 @@ export default function CalendarPage() {
               ))}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Fecha" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
             <Input label="Hora" type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Cliente</label>
               <select

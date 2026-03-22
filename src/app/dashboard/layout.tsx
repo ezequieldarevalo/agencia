@@ -11,13 +11,17 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar />
-      <div className="flex-1 ml-16 flex flex-col">
-        <TopBar onOpenSearch={() => setSearchOpen(true)} />
-        <main className="flex-1 p-6">{children}</main>
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <div className="flex-1 lg:ml-16 flex flex-col min-w-0">
+        <TopBar
+          onOpenSearch={() => setSearchOpen(true)}
+          onOpenSidebar={() => setSidebarOpen(true)}
+        />
+        <main className="flex-1 p-3 sm:p-4 lg:p-6">{children}</main>
       </div>
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>

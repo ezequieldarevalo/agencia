@@ -124,8 +124,8 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Reportes</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold">Reportes</h1>
         <div className="flex items-center gap-2">
           <div className="flex bg-gray-800 rounded-lg p-0.5">
             {[
@@ -152,7 +152,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           title="Ganancia Neta"
           value={formatCurrency(financial.totalRevenue)}
@@ -176,7 +176,7 @@ export default function ReportsPage() {
         />
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           title="Ingresos de Caja"
           value={formatCurrency(financial.ingresos)}
@@ -201,9 +201,9 @@ export default function ReportsPage() {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Monthly Revenue Chart */}
-        <Card className="col-span-2">
+        <Card className="lg:col-span-2">
           <h3 className="font-semibold mb-4">Flujo de Caja - Últimos 12 Meses</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={monthlySales}>
@@ -280,7 +280,7 @@ export default function ReportsPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Top Brands */}
         <Card>
           <h3 className="font-semibold mb-4">Marcas Más Frecuentes</h3>
@@ -336,7 +336,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Summary Footer */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">

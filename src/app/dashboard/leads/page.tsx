@@ -124,8 +124,8 @@ export default function LeadsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Interacciones de Leads</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold">Interacciones de Leads</h1>
         <Button onClick={() => setShowModal(true)}>
           <Plus size={16} className="mr-2" />
           Nueva Interacción
@@ -142,7 +142,7 @@ export default function LeadsPage() {
 
       <Card className="p-0">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[700px]">
             <thead>
               <tr className="border-b border-gray-800">
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Fecha</th>
@@ -187,13 +187,13 @@ export default function LeadsPage() {
           {modalTab === "client" && (
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-gray-400 uppercase">Información del Cliente</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input label="Nombre" value={form.clientFirstName} onChange={(e) => setForm({ ...form, clientFirstName: e.target.value })} required />
                 <Input label="Apellido" value={form.clientLastName} onChange={(e) => setForm({ ...form, clientLastName: e.target.value })} required />
                 <Input label="Email" type="email" value={form.clientEmail} onChange={(e) => setForm({ ...form, clientEmail: e.target.value })} />
                 <Input label="Teléfono" value={form.clientPhone} onChange={(e) => setForm({ ...form, clientPhone: e.target.value })} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Select label="Origen del Lead" value={form.origin} onChange={(e) => setForm({ ...form, origin: e.target.value })} options={[
                   { value: "INSTAGRAM", label: "Instagram" },
                   { value: "FACEBOOK", label: "Facebook" },
@@ -220,7 +220,7 @@ export default function LeadsPage() {
           {modalTab === "consultation" && (
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-gray-400 uppercase">Agregar Consulta</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Select label="Categoría" value={form.searchCategory} onChange={(e) => setForm({ ...form, searchCategory: e.target.value })} options={[
                   { value: "AUTOS_Y_CAMIONETAS", label: "Autos y Camionetas" },
                   { value: "MOTOS", label: "Motos" },

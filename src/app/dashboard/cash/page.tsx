@@ -134,8 +134,8 @@ export default function CashPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Caja</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold">Caja</h1>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setShowAccountModal(true)}>
             <Plus size={16} className="mr-2" />
@@ -149,7 +149,7 @@ export default function CashPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <StatCard title="Total General $" value={formatCurrency(totalARS)} icon={<DollarSign size={24} />} />
         <StatCard title="Total General USD" value={formatCurrency(totalUSD, "USD")} icon={<DollarSign size={24} />} />
         <StatCard title="Ingresos Hoy" value={formatCurrency(todayIncome)} icon={<TrendingUp size={24} className="text-green-500" />} />
@@ -161,7 +161,7 @@ export default function CashPage() {
       {accounts.length > 0 && (
         <Card>
           <h2 className="text-lg font-semibold mb-4">Saldos por Caja</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {accounts.map((acc) => (
               <div key={acc.id} className="bg-gray-800 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-1">
@@ -215,7 +215,7 @@ export default function CashPage() {
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[600px]">
               <thead>
                 <tr className="border-b border-gray-800">
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Fecha</th>
@@ -267,13 +267,13 @@ export default function CashPage() {
       {/* New Movement Modal */}
       <Modal open={showMovementModal} onClose={() => setShowMovementModal(false)} title="Nuevo Movimiento" size="lg">
         <form onSubmit={handleCreateMovement} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Fecha" type="date" value={movementForm.date} onChange={(e) => setMovementForm({ ...movementForm, date: e.target.value })} required />
             <Select label="Tipo" value={movementForm.type} onChange={(e) => setMovementForm({ ...movementForm, type: e.target.value })} options={[
               { value: "INGRESO", label: "Ingreso" },
               { value: "EGRESO", label: "Egreso" },
             ]} />
-            <Input label="Concepto" value={movementForm.concept} onChange={(e) => setMovementForm({ ...movementForm, concept: e.target.value })} required className="col-span-2" />
+            <Input label="Concepto" value={movementForm.concept} onChange={(e) => setMovementForm({ ...movementForm, concept: e.target.value })} required className="sm:col-span-2" />
             <Select label="Caja" value={movementForm.cashAccountId} onChange={(e) => setMovementForm({ ...movementForm, cashAccountId: e.target.value })} options={accounts.map((a) => ({ value: a.id, label: a.name }))} />
             <Input label="Categoría" value={movementForm.category} onChange={(e) => setMovementForm({ ...movementForm, category: e.target.value })} />
             <Select label="Moneda" value={movementForm.currency} onChange={(e) => setMovementForm({ ...movementForm, currency: e.target.value })} options={[

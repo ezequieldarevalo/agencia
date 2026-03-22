@@ -19,6 +19,7 @@ import {
   CalendarDays,
   BarChart3,
   Kanban,
+  X,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -38,63 +39,96 @@ const navItems = [
   { href: "/dashboard/settings", icon: Settings, label: "Configuraciones" },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  open?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-16 bg-gray-900 border-r border-gray-800 flex flex-col items-center py-4 z-50">
-      <Link
-        href="/dashboard"
-        className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center mb-6"
+    <>
+      {/* Mobile backdrop */}
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      <aside
+        className={cn(
+          "fixed left-0 top-0 h-full w-64 lg:w-16 bg-gray-900 border-r border-gray-800 flex flex-col py-4 z-50 transition-transform duration-200",
+          "lg:translate-x-0",
+          open ? "translate-x-0" : "-translate-x-full"
+        )}
       >
-        <span className="text-white text-xl font-bold">A</span>
-      </Link>
-
-      <nav className="flex-1 flex flex-col items-center gap-1">
-        {navItems.map((item) => {
-          const isActive =
-            item.href === "/dashboard"
-              ? pathname === "/dashboard"
-              : pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "w-10 h-10 rounded-lg flex items-center justify-center transition-colors group relative",
-                isActive
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:bg-gray-800 hover:text-white"
-              )}
-              title={item.label}
-            >
-              <item.icon size={20} />
-              <span className="absolute left-14 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
-                {item.label}
-              </span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="flex flex-col items-center gap-2 mb-2">
-        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center cursor-pointer group relative">
-          <Gift size={18} className="text-white" />
-          <span className="absolute left-14 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
-            ¡Ganá 1 mes gratis!
-          </span>
+        <div className="flex items-center justify-between px-4 lg:justify-center lg:px-0 mb-6">
+          <Link
+            href="/dashboard"
+            className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center"
+          >
+            <span className="text-white text-xl font-bold">A</span>
+          </Link>
+          <button
+            onClick={onClose}
+            className="lg:hidden w-10 h-10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white"
+          >
+            <X size={20} />
+          </button>
         </div>
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="w-10 h-10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white transition-colors group relative"
-          title="Cerrar sesión"
-        >
-          <LogOut size={20} />
-          <span className="absolute left-14 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
-            Cerrar sesión
-          </span>
-        </button>
-      </div>
-    </aside>
+
+        <nav className="flex-1 flex flex-col gap-1 px-3 lg:items-center lg:px-0 overflow-y-auto">
+          {navItems.map((item) => {
+            const isActive =
+              item.href === "/dashboard"
+                ? pathname === "/dashboard"
+                : pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 lg:w-10 lg:h-10 lg:p-0 lg:justify-center rounded-lg transition-colors group relative",
+                  isActive
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                )}
+                title={item.label}
+              >
+                <item.icon size={20} className="shrink-0" />
+                <span className="text-sm lg:hidden">{item.label}</span>
+                <span className="absolute left-14 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 hidden lg:block">
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="flex flex-col gap-2 px-3 lg:items-center lg:px-0 mb-2">
+          <div className="flex items-center gap-3 px-3 py-2.5 lg:w-10 lg:h-10 lg:p-0 lg:justify-center rounded-lg bg-gradient-to-br from-yellow-500 to-orange-500 cursor-pointer group relative">
+            <Gift size={18} className="text-white shrink-0" />
+            <span className="text-sm text-white lg:hidden">¡Ganá 1 mes gratis!</span>
+            <span className="absolute left-14 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 hidden lg:block">
+              ¡Ganá 1 mes gratis!
+            </span>
+          </div>
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="flex items-center gap-3 px-3 py-2.5 lg:w-10 lg:h-10 lg:p-0 lg:justify-center rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-colors group relative"
+            title="Cerrar sesión"
+          >
+            <LogOut size={20} className="shrink-0" />
+            <span className="text-sm lg:hidden">Cerrar sesión</span>
+            <span className="absolute left-14 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 hidden lg:block">
+              Cerrar sesión
+            </span>
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }

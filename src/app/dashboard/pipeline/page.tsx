@@ -192,9 +192,9 @@ export default function PipelinePage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Pipeline de Ventas</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Pipeline de Ventas</h1>
           <p className="text-sm text-gray-400 mt-1">
             {totalLeads} leads · Tasa de conversión: {conversionRate}%
           </p>
@@ -220,7 +220,8 @@ export default function PipelinePage() {
       </div>
 
       {/* Kanban Board */}
-      <div className="grid grid-cols-4 gap-4 min-h-[70vh]">
+      <div className="overflow-x-auto pb-4 -mx-3 px-3 sm:-mx-4 sm:px-4 lg:-mx-6 lg:px-6">
+        <div className="grid grid-cols-4 gap-4 min-h-[70vh] min-w-[800px]">
         {COLUMNS.map((col) => {
           const items = getColumnItems(col.id);
           return (
@@ -369,6 +370,7 @@ export default function PipelinePage() {
             </div>
           );
         })}
+        </div>
       </div>
     </div>
   );

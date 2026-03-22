@@ -151,7 +151,7 @@ export default function SuppliersPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Proveedores</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">Proveedores</h1>
       </div>
 
       <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
@@ -173,7 +173,7 @@ export default function SuppliersPage() {
 
       <Modal open={showModal} onClose={() => setShowModal(false)} title={editingId ? "Editar Proveedor" : "Nuevo Proveedor"} size="lg">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
               label="Tipo de Persona"
               value={form.personType}
@@ -190,7 +190,7 @@ export default function SuppliersPage() {
 
           <div>
             <h3 className="text-sm font-semibold text-gray-400 uppercase mb-3">Información Personal</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input label="Nombre" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} required />
               <Input label="Apellido" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} required />
               <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
@@ -204,7 +204,7 @@ export default function SuppliersPage() {
 
           <div>
             <h3 className="text-sm font-semibold text-gray-400 uppercase mb-3">Ubicación</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Select label="Provincia" value={form.province} onChange={(e) => setForm({ ...form, province: e.target.value })} options={PROVINCES.map((p) => ({ value: p, label: p }))} />
               <Input label="Ciudad" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
               <Input label="Calle" value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} />

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname } from "next/navigation";
-import { Bell, Search, ChevronRight, Check } from "lucide-react";
+import { Bell, Search, ChevronRight, Check, Menu } from "lucide-react";
 import Link from "next/link";
 
 interface Notification {
@@ -57,7 +57,7 @@ const typeIcon: Record<string, string> = {
   CALENDAR: "📅",
 };
 
-export function TopBar({ onOpenSearch }: { onOpenSearch: () => void }) {
+export function TopBar({ onOpenSearch, onOpenSidebar }: { onOpenSearch: () => void; onOpenSidebar: () => void }) {
   const pathname = usePathname();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
@@ -108,33 +108,41 @@ export function TopBar({ onOpenSearch }: { onOpenSearch: () => void }) {
   };
 
   return (
-    <div className="h-14 border-b border-gray-800 flex items-center justify-between px-6 bg-gray-900/50 backdrop-blur-sm sticky top-0 z-40">
-      {/* Breadcrumbs */}
-      <div className="flex items-center gap-1.5 text-sm">
-        {crumbs.map((c, i) => (
-          <span key={c.href} className="flex items-center gap-1.5">
-            {i > 0 && <ChevronRight size={14} className="text-gray-600" />}
-            {i === crumbs.length - 1 ? (
-              <span className="text-white font-medium">{c.label}</span>
-            ) : (
-              <Link href={c.href} className="text-gray-400 hover:text-white transition-colors">
-                {c.label}
-              </Link>
-            )}
-          </span>
-        ))}
+    <div className="h-14 border-b border-gray-800 flex items-center justify-between px-3 sm:px-4 lg:px-6 bg-gray-900/50 backdrop-blur-sm sticky top-0 z-40">
+      {/* Left side: hamburger + breadcrumbs */}
+      <div className="flex items-center gap-2 min-w-0">
+        <button
+          onClick={onOpenSidebar}
+          className="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white transition-colors shrink-0"
+        >
+          <Menu size={20} />
+        </button>
+        <div className="flex items-center gap-1.5 text-sm min-w-0">
+          {crumbs.map((c, i) => (
+            <span key={c.href} className="flex items-center gap-1.5">
+              {i > 0 && <ChevronRight size={14} className="text-gray-600 shrink-0" />}
+              {i === crumbs.length - 1 ? (
+                <span className="text-white font-medium truncate">{c.label}</span>
+              ) : (
+                <Link href={c.href} className="text-gray-400 hover:text-white transition-colors hidden sm:inline truncate">
+                  {c.label}
+                </Link>
+              )}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* Search trigger */}
         <button
           onClick={onOpenSearch}
-          className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-gray-400 hover:text-white hover:border-gray-600 transition-colors text-sm"
+          className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-gray-400 hover:text-white hover:border-gray-600 transition-colors text-sm"
         >
           <Search size={14} />
-          <span>Buscar...</span>
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-700 rounded text-xs text-gray-400">
+          <span className="hidden sm:inline">Buscar...</span>
+          <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-700 rounded text-xs text-gray-400">
             ⌘K
           </kbd>
         </button>
@@ -154,7 +162,7 @@ export function TopBar({ onOpenSearch }: { onOpenSearch: () => void }) {
           </button>
 
           {showNotifs && (
-            <div className="absolute right-0 top-full mt-2 w-96 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden">
+            <div className="absolute right-0 top-full mt-2 w-[calc(100vw-1.5rem)] sm:w-96 max-w-sm bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
                 <h3 className="font-semibold text-sm">Notificaciones</h3>
                 {unreadCount > 0 && (

@@ -142,7 +142,7 @@ export default function VehicleDetailPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold">{vehicle.name}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">{vehicle.name}</h1>
             <div className="flex items-center gap-2 mt-1">
               <Badge variant={statusColor[vehicle.status] || "default"}>{vehicle.status}</Badge>
               {vehicle.published && <Badge variant="info">Publicado</Badge>}
@@ -167,8 +167,8 @@ export default function VehicleDetailPage() {
       </div>
 
       {/* Photo Gallery + Price */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2">
           {vehicle.photos.length > 0 ? (
             <div>
               <div className="aspect-video bg-gray-800 rounded-xl overflow-hidden mb-2">
@@ -270,7 +270,7 @@ export default function VehicleDetailPage() {
         <div className="space-y-4">
           <Card>
             <h2 className="font-semibold mb-4">Especificaciones</h2>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {specs.map((s, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
                   <s.icon size={18} className="text-gray-400 shrink-0" />
@@ -291,7 +291,7 @@ export default function VehicleDetailPage() {
           {(vehicle.engineNumber || vehicle.chassisNumber) && (
             <Card>
               <h2 className="font-semibold mb-2">Identificación</h2>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 {vehicle.engineNumber && <div><span className="text-gray-400">Nro Motor:</span> <span>{vehicle.engineNumber}</span></div>}
                 {vehicle.chassisNumber && <div><span className="text-gray-400">Nro Chasis:</span> <span>{vehicle.chassisNumber}</span></div>}
               </div>

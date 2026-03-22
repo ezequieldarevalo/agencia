@@ -259,7 +259,7 @@ export default function WhatsAppIntegrationPage() {
           <MessageCircle size={20} className="text-white" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">WhatsApp</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">WhatsApp</h1>
           <p className="text-gray-400 text-sm">Business API</p>
         </div>
         <Badge variant={status.connected ? "success" : "default"} className="ml-2">
@@ -297,7 +297,7 @@ export default function WhatsAppIntegrationPage() {
 
       {/* Quick Actions */}
       {status.connected && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card>
             <button onClick={() => { setSendForm({ ...sendForm, mode: "text" }); setTab("enviar"); }} className="w-full flex items-center gap-3 text-left">
               <div className="w-10 h-10 bg-green-700 rounded-lg flex items-center justify-center"><Send size={18} className="text-white" /></div>
@@ -338,8 +338,8 @@ export default function WhatsAppIntegrationPage() {
 
           {/* Conversations Tab */}
           {tab === "conversaciones" && (
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-1 space-y-2">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-1 space-y-2">
                 {conversations.length === 0 ? (
                   <Card><p className="text-gray-500 text-sm text-center py-4">Sin conversaciones</p></Card>
                 ) : (
@@ -370,7 +370,7 @@ export default function WhatsAppIntegrationPage() {
                   ))
                 )}
               </div>
-              <div className="col-span-2">
+              <div className="lg:col-span-2">
                 <Card>
                   {activePhone ? (
                     <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -432,7 +432,7 @@ export default function WhatsAppIntegrationPage() {
                   ))}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">Destinatario</label>
                     <select

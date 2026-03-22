@@ -228,8 +228,8 @@ export default function VehiclesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Inventario</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold">Inventario</h1>
         <div className="flex items-center gap-4 text-sm">
           <span className="text-gray-400">
             Disponibles: <span className="text-green-400 font-semibold">{available}</span>
@@ -272,8 +272,8 @@ export default function VehiclesPage() {
           {/* Información Principal */}
           <div>
             <h3 className="text-sm font-semibold text-gray-400 uppercase mb-3">Información Principal</h3>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              <Input label="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="col-span-2 lg:col-span-3" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Input label="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="sm:col-span-2 lg:col-span-3" />
               <Select label="Estado" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} options={[
                 { value: "DISPONIBLE", label: "Disponible" },
                 { value: "RESERVADO", label: "Reservado" },
@@ -297,7 +297,7 @@ export default function VehiclesPage() {
           {/* Precio */}
           <div>
             <h3 className="text-sm font-semibold text-gray-400 uppercase mb-3">Precio</h3>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Select label="Moneda" value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} options={[
                 { value: "ARS", label: "ARS - Pesos" },
                 { value: "USD", label: "USD - Dólares" },
@@ -316,7 +316,7 @@ export default function VehiclesPage() {
                 {showDetails ? "Ocultar detalles" : "Ver más detalles"}
               </button>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Select label="Combustible" value={form.fuel} onChange={(e) => setForm({ ...form, fuel: e.target.value })} options={[
                 { value: "NAFTA", label: "Nafta" },
                 { value: "DIESEL", label: "Diesel" },
@@ -337,7 +337,7 @@ export default function VehiclesPage() {
               ]} />
             </div>
             {showDetails && (
-              <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                 <Select label="Transmisión" value={form.transmission} onChange={(e) => setForm({ ...form, transmission: e.target.value })} options={[
                   { value: "MANUAL", label: "Manual" },
                   { value: "AUTOMATICA", label: "Automática" },
@@ -357,7 +357,7 @@ export default function VehiclesPage() {
           {/* Identificación */}
           <div>
             <h3 className="text-sm font-semibold text-gray-400 uppercase mb-3">Identificación</h3>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Input label="Dominio" value={form.domain} onChange={(e) => setForm({ ...form, domain: e.target.value })} />
               <Input label="Nro. Motor" value={form.engineNumber} onChange={(e) => setForm({ ...form, engineNumber: e.target.value })} />
               <Input label="Nro. Chasis" value={form.chassisNumber} onChange={(e) => setForm({ ...form, chassisNumber: e.target.value })} />
@@ -367,7 +367,7 @@ export default function VehiclesPage() {
           {/* Ubicación y Contacto */}
           <div>
             <h3 className="text-sm font-semibold text-gray-400 uppercase mb-3">Ubicación y Contacto</h3>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Input label="Provincia" value={form.locationProvince} onChange={(e) => setForm({ ...form, locationProvince: e.target.value })} />
               <Input label="Ciudad" value={form.locationCity} onChange={(e) => setForm({ ...form, locationCity: e.target.value })} />
               <Input label="Teléfono de contacto" value={form.contactPhone} onChange={(e) => setForm({ ...form, contactPhone: e.target.value })} />

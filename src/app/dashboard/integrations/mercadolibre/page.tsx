@@ -270,7 +270,7 @@ export default function MercadoLibreIntegrationPage() {
           <ShoppingBag size={20} className="text-white" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">MercadoLibre</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">MercadoLibre</h1>
           <p className="text-gray-400 text-sm">Publicación de vehículos</p>
         </div>
         <Badge variant={status.connected ? "success" : "default"} className="ml-2">
@@ -317,7 +317,7 @@ export default function MercadoLibreIntegrationPage() {
 
       {/* Stats Summary */}
       {status.connected && (
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-green-700 rounded-lg flex items-center justify-center"><TrendingUp size={18} /></div>
@@ -493,7 +493,7 @@ export default function MercadoLibreIntegrationPage() {
                 />
                 <p className="text-xs text-gray-500 -mt-2">{publishForm.title.length}/60</p>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Input
                     label="Precio"
                     type="number"
@@ -612,7 +612,7 @@ export default function MercadoLibreIntegrationPage() {
                           </div>
                           <Badge variant={statusColor(l.status)}>{l.status}</Badge>
                         </div>
-                        <div className="grid grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                           <div className="flex items-center gap-2">
                             <DollarSign size={14} className="text-green-400" />
                             <div>

@@ -66,7 +66,7 @@ export default function DebtsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Módulo de Deudas</h1>
+      <h1 className="text-xl sm:text-2xl font-bold">Módulo de Deudas</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard title="Pendiente ARS" value={formatCurrency(pendingARS)} icon={<DollarSign size={24} />} />
@@ -94,7 +94,7 @@ export default function DebtsPage() {
           />
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[700px]">
             <thead>
               <tr className="border-b border-gray-800">
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Próximo pago</th>

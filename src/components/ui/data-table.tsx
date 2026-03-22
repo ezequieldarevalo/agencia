@@ -26,9 +26,9 @@ export function DataTable<T extends { id: string }>({
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
       {(onSearchChange || actions) && (
-        <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between gap-4">
+        <div className="px-3 sm:px-4 py-3 border-b border-gray-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
           {onSearchChange && (
-            <div className="relative flex-1 max-w-sm">
+            <div className="relative flex-1 sm:max-w-sm">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
               <input
                 type="text"
@@ -39,17 +39,17 @@ export function DataTable<T extends { id: string }>({
               />
             </div>
           )}
-          {actions && <div className="flex items-center gap-2">{actions}</div>}
+          {actions && <div className="flex items-center gap-2 self-end sm:self-auto">{actions}</div>}
         </div>
       )}
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full min-w-[600px]">
           <thead>
             <tr className="border-b border-gray-800">
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider"
+                  className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap"
                 >
                   {col.label}
                 </th>
@@ -70,7 +70,7 @@ export function DataTable<T extends { id: string }>({
               data.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-800/50 transition-colors">
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3 text-sm text-gray-300">
+                    <td key={col.key} className="px-3 sm:px-4 py-3 text-sm text-gray-300 whitespace-nowrap">
                       {col.render
                         ? col.render(item)
                         : (item as Record<string, unknown>)[col.key] as string}

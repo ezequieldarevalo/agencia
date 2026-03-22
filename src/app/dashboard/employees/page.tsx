@@ -135,7 +135,7 @@ export default function EmployeesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Empleados</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">Empleados</h1>
       </div>
 
       <DataTable
@@ -163,7 +163,7 @@ export default function EmployeesPage() {
           {!editingId && (
             <div>
               <h3 className="text-sm font-semibold text-gray-400 uppercase mb-3">Usuario</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
                   label="Email"
                   type="email"
@@ -184,7 +184,7 @@ export default function EmployeesPage() {
 
           <div>
             <h3 className="text-sm font-semibold text-gray-400 uppercase mb-3">Información Personal</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Nombre"
                 value={form.firstName}
@@ -227,7 +227,7 @@ export default function EmployeesPage() {
                 value={form.city}
                 onChange={(e) => setForm({ ...form, city: e.target.value })}
               />
-              <div className="grid grid-cols-3 gap-2 col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:col-span-2">
                 <div className="col-span-2">
                   <Input
                     label="Calle"
