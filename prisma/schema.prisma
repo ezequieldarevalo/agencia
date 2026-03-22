@@ -1,0 +1,398 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String?
+  role          String    @default("USER")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  employee      Employee?
+}
+
+model Employee {
+  id            String   @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String   @unique
+  phone         String?
+  area          String   @default("VENTAS")
+  dni           String?
+  province      String?
+  city          String?
+  street        String?
+  streetNumber  String?
+  active        Boolean  @default(true)
+  userId        String?  @unique
+  user          User?    @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Client {
+  id              String        @id @default(cuid())
+  personType      String        @default("FISICA")
+  clientType      String        @default("CLIENTE")
+  firstName       String
+  lastName        String
+  email           String?
+  phone           String?
+  dni             String?
+  cuit            String?
+  cuil            String?
+  sex             String?
+  province        String?
+  city            String?
+  street          String?
+  streetNumber    String?
+  observations    String?
+  lastContact     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  vehiclesBought  Vehicle[]     @relation("BuyerVehicles")
+  debts           Debt[]
+  interactions    Interaction[]
+  waMessages      WaMessage[]
+  calendarEvents  CalendarEvent[]
+}
+
+model Supplier {
+  id              String    @id @default(cuid())
+  personType      String    @default("FISICA")
+  supplierType    String    @default("VEHICULOS")
+  supplierSubtype String?
+  firstName       String
+  lastName        String
+  email           String?
+  phone           String?
+  dni             String?
+  cuit            String?
+  cuil            String?
+  sex             String?
+  province        String?
+  city            String?
+  street          String?
+  streetNumber    String?
+  observations    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  vehicles        Vehicle[] @relation("SupplierVehicles")
+}
+
+model Vehicle {
+  id              String          @id @default(cuid())
+  name            String
+  status          String          @default("DISPONIBLE")
+  category        String          @default("AUTOS_Y_CAMIONETAS")
+  kilometers      Int?
+  brand           String?
+  model           String?
+  year            Int?
+  version         String?
+  priceARS        Float?
+  priceUSD        Float?
+  currency        String          @default("ARS")
+  exchangeRate    Float?
+  fuel            String?
+  color           String?
+  doors           Int?
+  bodyType        String?
+  transmission    String?
+  engine          String?
+  domain          String?
+  engineNumber    String?
+  chassisNumber   String?
+  description     String?
+  locationProvince String?
+  locationCity    String?
+  contactPhone    String?
+  notes           String?
+  published       Boolean         @default(false)
+  supplierId      String?
+  supplier        Supplier?       @relation("SupplierVehicles", fields: [supplierId], references: [id])
+  buyerId         String?
+  buyer           Client?         @relation("BuyerVehicles", fields: [buyerId], references: [id])
+  photos          VehiclePhoto[]
+  movements       CashMovement[]
+  debts           Debt[]
+  interactions    Interaction[]
+  metaPublications MetaPublication[]
+  waMessages      WaMessage[]
+  mlListings      MlListing[]
+  calendarEvents  CalendarEvent[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model VehiclePhoto {
+  id        String   @id @default(cuid())
+  url       String
+  order     Int      @default(0)
+  vehicleId String
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model CashAccount {
+  id            String         @id @default(cuid())
+  name          String
+  type          String         @default("EFECTIVO")
+  currency      String         @default("ARS")
+  identifier    String?
+  initialBalance Float         @default(0)
+  currentBalance Float         @default(0)
+  active        Boolean        @default(true)
+  movements     CashMovement[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model CashMovement {
+  id            String       @id @default(cuid())
+  date          DateTime     @default(now())
+  type          String
+  concept       String
+  category      String?
+  amountARS     Float        @default(0)
+  amountUSD     Float        @default(0)
+  exchangeRate  Float?
+  currency      String       @default("ARS")
+  cashAccountId String
+  cashAccount   CashAccount  @relation(fields: [cashAccountId], references: [id])
+  vehicleId     String?
+  vehicle       Vehicle?     @relation(fields: [vehicleId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model Debt {
+  id            String       @id @default(cuid())
+  category      String       @default("VENTA")
+  paymentMethod String       @default("EFECTIVO")
+  totalAmount   Float
+  paidAmount    Float        @default(0)
+  currency      String       @default("ARS")
+  status        String       @default("PENDIENTE")
+  nextPayment   DateTime?
+  clientId      String
+  client        Client       @relation(fields: [clientId], references: [id])
+  vehicleId     String?
+  vehicle       Vehicle?     @relation(fields: [vehicleId], references: [id])
+  concept       String?
+  payments      DebtPayment[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model DebtPayment {
+  id        String   @id @default(cuid())
+  amount    Float
+  date      DateTime @default(now())
+  debtId    String
+  debt      Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Interaction {
+  id            String   @id @default(cuid())
+  date          DateTime @default(now())
+  status        String   @default("CONSULTA_ABIERTA")
+  origin        String?
+  score         Int      @default(0)
+  notes         String?
+  searchCategory String?
+  searchInterest String?
+  searchBodyType String?
+  searchCurrency String?
+  searchPriceMin Float?
+  searchPriceMax Float?
+  searchYearMin  Int?
+  searchYearMax  Int?
+  searchColor   String?
+  budgetAmount  Float?
+  budgetCurrency String?
+  budgetExchangeRate Float?
+  budgetTransferCharged Boolean @default(false)
+  budgetFullPayment Boolean @default(false)
+  saleCompleted Boolean  @default(false)
+  clientId      String
+  client        Client   @relation(fields: [clientId], references: [id])
+  vehicleId     String?
+  vehicle       Vehicle? @relation(fields: [vehicleId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Dealership {
+  id            String   @id @default(cuid())
+  name          String
+  email         String?
+  cuit          String?
+  phone         String?
+  province      String?
+  city          String?
+  street        String?
+  streetNumber  String?
+  logoUrl       String?
+  schedule      String?
+  videoUrl      String?
+  description   String?
+  saleContract  String?
+  depositReceipt String?
+  consignmentContract String?
+  plan          String   @default("V12_PREMIUM")
+  metaIntegration Boolean @default(false)
+  whatsappIntegration Boolean @default(false)
+  mlIntegration Boolean @default(false)
+  // Meta integration fields
+  metaAccessToken    String?
+  metaPageId         String?
+  metaPageName       String?
+  metaIgAccountId    String?
+  metaIgUsername     String?
+  metaConnectedAt    DateTime?
+  // WhatsApp integration fields
+  waPhoneNumberId    String?
+  waBusinessId       String?
+  waAccessToken      String?
+  waPhoneDisplay     String?
+  waConnectedAt      DateTime?
+  // MercadoLibre integration fields
+  mlAccessToken      String?
+  mlRefreshToken     String?
+  mlUserId           String?
+  mlNickname         String?
+  mlConnectedAt      DateTime?
+  mlTokenExpiresAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Meta: publications to Facebook/Instagram
+model MetaPublication {
+  id            String   @id @default(cuid())
+  vehicleId     String
+  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  platform      String   // FACEBOOK, INSTAGRAM, BOTH
+  postId        String?  // Facebook/IG post ID
+  status        String   @default("DRAFT") // DRAFT, PUBLISHED, FAILED, REMOVED
+  message       String?
+  publishedAt   DateTime?
+  reach         Int      @default(0)
+  clicks        Int      @default(0)
+  inquiries     Int      @default(0)
+  errorMessage  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// WhatsApp: message templates
+model WaTemplate {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  category      String   @default("MARKETING") // MARKETING, UTILITY, AUTHENTICATION
+  body          String   // Template body with {{variables}}
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// WhatsApp: conversation messages
+model WaMessage {
+  id            String   @id @default(cuid())
+  direction     String   // INBOUND, OUTBOUND
+  phone         String   // Client phone number
+  clientId      String?
+  client        Client?  @relation(fields: [clientId], references: [id])
+  vehicleId     String?
+  vehicle       Vehicle? @relation(fields: [vehicleId], references: [id])
+  templateId    String?
+  messageType   String   @default("TEXT") // TEXT, IMAGE, TEMPLATE, VEHICLE_CARD
+  content       String
+  waMessageId   String?  // WhatsApp Cloud API message ID
+  status        String   @default("SENT") // SENT, DELIVERED, READ, FAILED
+  errorMessage  String?
+  createdAt     DateTime @default(now())
+}
+
+// MercadoLibre: vehicle listings
+model MlListing {
+  id            String   @id @default(cuid())
+  vehicleId     String
+  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  mlItemId      String?  @unique // MercadoLibre item ID
+  status        String   @default("DRAFT") // DRAFT, ACTIVE, PAUSED, CLOSED, UNDER_REVIEW
+  title         String
+  price         Float
+  currency      String   @default("ARS")
+  categoryId    String?
+  listingType   String   @default("gold_special") // free, bronze, silver, gold, gold_special
+  permalink     String?
+  views         Int      @default(0)
+  questions     Int      @default(0)
+  favorites     Int      @default(0)
+  publishedAt   DateTime?
+  errorMessage  String?
+  mlQuestions   MlQuestion[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// MercadoLibre: questions on listings
+model MlQuestion {
+  id            String   @id @default(cuid())
+  listingId     String
+  listing       MlListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  mlQuestionId  String?  @unique
+  buyerNickname String?
+  question      String
+  answer        String?
+  status        String   @default("UNANSWERED") // UNANSWERED, ANSWERED, CLOSED_UNANSWERED
+  answeredAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Notification system
+model Notification {
+  id            String   @id @default(cuid())
+  type          String   // NEW_LEAD, PAYMENT_RECEIVED, VEHICLE_SOLD, DEBT_OVERDUE, ML_QUESTION, WA_MESSAGE, SYSTEM
+  title         String
+  message       String
+  link          String?  // URL to navigate to
+  read          Boolean  @default(false)
+  createdAt     DateTime @default(now())
+}
+
+// Calendar/Agenda system
+model CalendarEvent {
+  id            String   @id @default(cuid())
+  title         String
+  type          String   @default("SEGUIMIENTO") // TEST_DRIVE, SEGUIMIENTO, PAGO, ENTREGA, REUNION, OTRO
+  date          DateTime
+  endDate       DateTime?
+  allDay        Boolean  @default(false)
+  description   String?
+  clientId      String?
+  client        Client?  @relation(fields: [clientId], references: [id])
+  vehicleId     String?
+  vehicle       Vehicle? @relation(fields: [vehicleId], references: [id])
+  completed     Boolean  @default(false)
+  color         String?  // Hex color for calendar display
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
