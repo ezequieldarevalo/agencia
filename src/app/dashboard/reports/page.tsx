@@ -14,7 +14,6 @@ import {
   Package,
   Clock,
   Download,
-  Calendar,
 } from "lucide-react";
 import {
   BarChart,
@@ -214,7 +213,7 @@ export default function ReportsPage() {
               <Tooltip
                 contentStyle={{ backgroundColor: "#1f2937", border: "1px solid #374151", borderRadius: "8px" }}
                 labelStyle={{ color: "#fff" }}
-                formatter={(value: any) => formatCurrency(Number(value))}
+                formatter={(value) => formatCurrency(Number(value ?? 0))}
               />
               <Legend />
               <Bar dataKey="ingresos" name="Ingresos" fill="#22c55e" radius={[4, 4, 0, 0]} />

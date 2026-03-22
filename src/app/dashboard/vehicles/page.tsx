@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, Pencil, Trash2, Printer, Eye, Facebook, Instagram, MessageCircle, ShoppingBag } from "lucide-react";
+import { Plus, Pencil, Trash2, Printer, Facebook, Instagram, ShoppingBag } from "lucide-react";
 
 interface Vehicle {
   id: string;

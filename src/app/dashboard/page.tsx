@@ -2,7 +2,6 @@
 
 import { Card, StatCard } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/utils";
 import { BarChart3, TrendingUp, DollarSign, Car } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -40,7 +39,7 @@ export default function DashboardPage() {
       .catch(() => {
         // Set demo data if API fails
         setData({
-          monthlyOps: months.map((m, i) => ({
+          monthlyOps: months.map((m) => ({
             month: m,
             compras: Math.floor(Math.random() * 10),
             ventas: Math.floor(Math.random() * 8),
@@ -170,7 +169,7 @@ export default function DashboardPage() {
                   borderRadius: "8px",
                   color: "#fff",
                 }}
-                formatter={(value: number) => formatCurrency(value, showUSD ? "USD" : "ARS")}
+                formatter={(value) => formatCurrency(Number(value ?? 0), showUSD ? "USD" : "ARS")}
               />
               <Line
                 type="monotone"

@@ -78,6 +78,7 @@ export default function MercadoLibreIntegrationPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [tab, setTab] = useState<ActiveTab>("publicaciones");
   const [showConnect, setShowConnect] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showAnswerModal, setShowAnswerModal] = useState(false);
   const [answeringQuestion, setAnsweringQuestion] = useState<MlQuestion | null>(null);
@@ -249,6 +250,7 @@ export default function MercadoLibreIntegrationPage() {
   const totalViews = listings.reduce((sum, l) => sum + l.views, 0);
   const totalFavs = listings.reduce((sum, l) => sum + l.favorites, 0);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const publishedVehicleIds = new Set(listings.map((l) => l.vehicle?.name));
 
   const tabs = [

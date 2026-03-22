@@ -9,7 +9,7 @@ import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs } from "@/components/ui/tabs";
 import { PROVINCES, formatDate } from "@/lib/utils";
-import { Plus, Pencil, Trash2, Eye, MessageCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, MessageCircle } from "lucide-react";
 
 interface Client {
   id: string;

@@ -17,7 +17,6 @@ import {
   Settings2,
   Hash,
   MapPin,
-  DollarSign,
   Facebook,
   Instagram,
   ShoppingBag,
@@ -25,10 +24,6 @@ import {
   Pencil,
   User,
   Truck,
-  TrendingUp,
-  Clock,
-  CreditCard,
-  FileText,
   Image,
 } from "lucide-react";
 
@@ -177,6 +172,7 @@ export default function VehicleDetailPage() {
           {vehicle.photos.length > 0 ? (
             <div>
               <div className="aspect-video bg-gray-800 rounded-xl overflow-hidden mb-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={vehicle.photos[activePhoto]?.url}
                   alt={vehicle.name}
@@ -193,7 +189,8 @@ export default function VehicleDetailPage() {
                         i === activePhoto ? "border-blue-500" : "border-transparent hover:border-gray-600"
                       }`}
                     >
-                      <img src={p.url} alt="" className="w-full h-full object-cover" />
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={p.url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
@@ -202,6 +199,7 @@ export default function VehicleDetailPage() {
           ) : (
             <div className="aspect-video bg-gray-800 rounded-xl flex items-center justify-center">
               <div className="text-center text-gray-500">
+                {/* eslint-disable-next-line jsx-a11y/alt-text */}
                 <Image size={48} className="mx-auto mb-2" />
                 <p>Sin fotos</p>
               </div>

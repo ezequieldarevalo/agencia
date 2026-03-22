@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { Card, StatCard } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs } from "@/components/ui/tabs";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { DollarSign, AlertTriangle, CreditCard } from "lucide-react";
+import { DollarSign, AlertTriangle } from "lucide-react";
 
 interface Debt {
   id: string;

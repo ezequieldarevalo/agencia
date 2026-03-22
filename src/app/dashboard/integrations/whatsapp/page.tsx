@@ -13,14 +13,11 @@ import {
   Unplug,
   Send,
   Car,
-  CreditCard,
   FileText,
   Plus,
   Pencil,
   Trash2,
   User,
-  Phone,
-  Clock,
 } from "lucide-react";
 
 interface WaStatus {

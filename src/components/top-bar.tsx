@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname } from "next/navigation";
-import { Bell, Search, ChevronRight, X, Check } from "lucide-react";
+import { Bell, Search, ChevronRight, Check } from "lucide-react";
 import Link from "next/link";
 
 interface Notification {

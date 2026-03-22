@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
 
 interface DataTableProps<T> {

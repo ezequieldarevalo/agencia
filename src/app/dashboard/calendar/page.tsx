@@ -11,15 +11,7 @@ import {
   ChevronRight,
   Plus,
   Check,
-  Clock,
-  Car,
-  UserCircle,
   Trash2,
-  CalendarDays,
-  Phone,
-  MapPin,
-  FileText,
-  TestTube,
 } from "lucide-react";
 
 interface CalendarEvent {
