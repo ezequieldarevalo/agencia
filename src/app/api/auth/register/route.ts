@@ -30,19 +30,21 @@ export async function POST(request: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create a default dealership for the new user
+    const dealership = await prisma.dealership.create({
+      data: {
+        name: name ? `Agencia de ${name}` : "Mi Agencia",
+        plan: "V6",
+      },
+    });
+
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         name: name || email.split("@")[0],
         role: "ADMIN",
-      },
-    });
-
-    // Create a default dealership for the new user
-    await prisma.dealership.create({
-      data: {
-        name: name ? `Agencia de ${name}` : "Mi Agencia",
+        dealershipId: dealership.id,
       },
     });
 

@@ -17,7 +17,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   V6: {
     id: "V6",
     name: "Plan V6",
-    price: 90000,
+    price: 70000,
     description: "Ideal para arrancar",
     features: [
       "Inventario",
@@ -38,7 +38,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   V12: {
     id: "V12",
     name: "Plan V12",
-    price: 150000,
+    price: 130000,
     description: "Para agencias en crecimiento",
     features: [
       "Todo lo del Plan V6",
@@ -63,7 +63,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   V12_PRO: {
     id: "V12_PRO",
     name: "Plan V12 Pro",
-    price: 180000,
+    price: 160000,
     description: "Gestión completa con caja y prospectos",
     features: [
       "Todo lo del Plan V12",
@@ -88,7 +88,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   V12_PREMIUM: {
     id: "V12_PREMIUM",
     name: "Plan V12 Premium",
-    price: 200000,
+    price: 180000,
     description: "El pack completo",
     features: [
       "Todo lo del Plan V12 Pro",

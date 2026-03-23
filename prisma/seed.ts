@@ -7,6 +7,39 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Seeding database...");
 
+  // Create dealership first (so users can be linked)
+  const dealership = await prisma.dealership.upsert({
+    where: { id: "default" },
+    update: {},
+    create: {
+      id: "default",
+      name: "Autogestor Agencia",
+      email: "info@autogestor.com.ar",
+      cuit: "30-71234567-8",
+      phone: "351-4000000",
+      province: "Córdoba",
+      city: "Córdoba",
+      street: "Av. Colón",
+      streetNumber: "1234",
+      plan: "V12_PREMIUM",
+      schedule: "Lunes a Viernes: 9:00 - 18:00\nSábados: 9:00 - 13:00",
+      description: "Agencia de autos multimarca. Compra, venta y consignación de vehículos usados y 0km.",
+    },
+  });
+
+  // Create super admin user
+  const superAdminPassword = await bcrypt.hash("super123", 10);
+  await prisma.user.upsert({
+    where: { email: "super@autogestor.com.ar" },
+    update: {},
+    create: {
+      email: "super@autogestor.com.ar",
+      password: superAdminPassword,
+      name: "Super Admin",
+      role: "SUPERADMIN",
+    },
+  });
+
   // Create admin user
   const adminPassword = await bcrypt.hash("admin123", 10);
   const admin = await prisma.user.upsert({
@@ -17,6 +50,7 @@ async function main() {
       password: adminPassword,
       name: "Administrador",
       role: "ADMIN",
+      dealershipId: dealership.id,
     },
   });
 
@@ -47,6 +81,7 @@ async function main() {
       password: salesPassword,
       name: "Juan Vendedor",
       role: "USER",
+      dealershipId: dealership.id,
     },
   });
 
@@ -277,27 +312,8 @@ async function main() {
     }),
   ]);
 
-  // Create dealership
-  await prisma.dealership.upsert({
-    where: { id: "default" },
-    update: {},
-    create: {
-      id: "default",
-      name: "Autogestor Agencia",
-      email: "info@autogestor.com.ar",
-      cuit: "30-71234567-8",
-      phone: "351-4000000",
-      province: "Córdoba",
-      city: "Córdoba",
-      street: "Av. Colón",
-      streetNumber: "1234",
-      plan: "V12_PREMIUM",
-      schedule: "Lunes a Viernes: 9:00 - 18:00\nSábados: 9:00 - 13:00",
-      description: "Agencia de autos multimarca. Compra, venta y consignación de vehículos usados y 0km.",
-    },
-  });
-
   console.log("✅ Seed completed!");
+  console.log("📧 Super Admin: super@autogestor.com.ar / super123");
   console.log("📧 Admin: admin@autogestor.com.ar / admin123");
   console.log("📧 Ventas: ventas@autogestor.com.ar / ventas123");
 }

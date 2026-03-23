@@ -78,7 +78,7 @@ const stats = [
 const plans = [
   {
     name: "Plan V6",
-    price: "$90.000",
+    price: "$70.000",
     period: "/mes",
     description: "Ideal para arrancar",
     features: [
@@ -94,7 +94,7 @@ const plans = [
   },
   {
     name: "Plan V12",
-    price: "$150.000",
+    price: "$130.000",
     period: "/mes",
     description: "Para agencias en crecimiento",
     features: [
@@ -110,7 +110,7 @@ const plans = [
   },
   {
     name: "Plan V12 Pro",
-    price: "$180.000",
+    price: "$160.000",
     period: "/mes",
     description: "Gestión completa con caja y prospectos",
     features: [
@@ -123,7 +123,7 @@ const plans = [
   },
   {
     name: "Plan V12 Premium",
-    price: "$200.000",
+    price: "$180.000",
     period: "/mes",
     description: "El pack completo",
     features: [

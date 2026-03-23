@@ -18,6 +18,8 @@ model User {
   password      String
   name          String?
   role          String    @default("USER")
+  dealershipId  String?
+  dealership    Dealership? @relation(fields: [dealershipId], references: [id])
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   employee      Employee?
@@ -253,10 +255,12 @@ model Dealership {
   saleContract  String?
   depositReceipt String?
   consignmentContract String?
-  plan          String   @default("V12_PREMIUM")
+  plan          String   @default("V6")
   metaIntegration Boolean @default(false)
   whatsappIntegration Boolean @default(false)
   mlIntegration Boolean @default(false)
+  users         User[]
+  planRequests  PlanChangeRequest[]
   // Meta integration fields
   metaAccessToken    String?
   metaPageId         String?
@@ -393,6 +397,22 @@ model CalendarEvent {
   vehicle       Vehicle? @relation(fields: [vehicleId], references: [id])
   completed     Boolean  @default(false)
   color         String?  // Hex color for calendar display
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Plan change requests (upgrade/downgrade)
+model PlanChangeRequest {
+  id            String   @id @default(cuid())
+  dealershipId  String
+  dealership    Dealership @relation(fields: [dealershipId], references: [id])
+  currentPlan   String
+  requestedPlan String
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  paymentAlias  String?  // Payment alias used
+  notes         String?
+  reviewedBy    String?  // Admin who reviewed
+  reviewedAt    DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

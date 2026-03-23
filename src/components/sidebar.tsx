@@ -20,8 +20,9 @@ import {
   BarChart3,
   Kanban,
   X,
+  Shield,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { usePlan } from "@/components/plan-provider";
 
 const navItems = [
@@ -48,6 +49,8 @@ interface SidebarProps {
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { plan } = usePlan();
+  const { data: session } = useSession();
+  const isSuperAdmin = (session?.user as { role?: string })?.role === "SUPERADMIN";
 
   return (
     <>
@@ -113,6 +116,20 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
 
         <div className="flex flex-col gap-2 px-3 lg:items-center lg:px-0 mb-2">
+          {isSuperAdmin && (
+            <Link
+              href="/admin"
+              onClick={onClose}
+              className="flex items-center gap-3 px-3 py-2.5 lg:w-10 lg:h-10 lg:p-0 lg:justify-center rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600/30 transition-colors group relative"
+              title="Admin Console"
+            >
+              <Shield size={18} className="shrink-0" />
+              <span className="text-sm lg:hidden">Admin Console</span>
+              <span className="absolute left-14 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 hidden lg:block">
+                Admin Console
+              </span>
+            </Link>
+          )}
           <div className="flex items-center gap-3 px-3 py-2.5 lg:w-10 lg:h-10 lg:p-0 lg:justify-center rounded-lg bg-gradient-to-br from-yellow-500 to-orange-500 cursor-pointer group relative">
             <Gift size={18} className="text-white shrink-0" />
             <span className="text-sm text-white lg:hidden">¡Ganá 1 mes gratis!</span>

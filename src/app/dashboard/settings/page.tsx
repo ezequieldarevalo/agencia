@@ -7,8 +7,190 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PROVINCES } from "@/lib/utils";
 import { Select } from "@/components/ui/select";
-import { Save, Globe, MessageCircle, ShoppingBag, Check, Crown } from "lucide-react";
+import { Save, Globe, MessageCircle, ShoppingBag, Check, Crown, ArrowRight, Clock, Copy } from "lucide-react";
 import { PLANS, getPlan, formatPlanPrice, type PlanId } from "@/lib/plans";
+
+const PAYMENT_ALIAS = "total.abundance.cp";
+
+function PlanSection({ dealership }: { dealership: Dealership | null }) {
+  const [selectedPlan, setSelectedPlan] = useState<PlanId | null>(null);
+  const [showPayment, setShowPayment] = useState(false);
+  const [pendingRequest, setPendingRequest] = useState<{ requestedPlan: string } | null>(null);
+  const [requestSent, setRequestSent] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/plan/upgrade")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.pendingRequest) setPendingRequest(data.pendingRequest);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleUpgradeClick = (planId: PlanId) => {
+    setSelectedPlan(planId);
+    setShowPayment(true);
+  };
+
+  const handleConfirmRequest = async () => {
+    if (!selectedPlan) return;
+    const res = await fetch("/api/plan/upgrade", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestedPlan: selectedPlan }),
+    });
+    if (res.ok) {
+      setRequestSent(true);
+      setShowPayment(false);
+      const data = await res.json();
+      setPendingRequest({ requestedPlan: data.requestedPlan });
+    }
+  };
+
+  const copyAlias = () => {
+    navigator.clipboard.writeText(PAYMENT_ALIAS);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const currentPlan = dealership?.plan || "V6";
+
+  return (
+    <>
+      <Card>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Crown size={20} className="text-yellow-500" /> Plan Actual
+            </h2>
+            <p className="text-gray-400 text-sm mt-1">
+              Tu plan determina las funcionalidades disponibles
+            </p>
+          </div>
+          <div className="flex items-center gap-2 self-start">
+            {pendingRequest && (
+              <Badge variant="warning" className="text-xs flex items-center gap-1">
+                <Clock size={12} /> Cambio a {getPlan(pendingRequest.requestedPlan).name} pendiente
+              </Badge>
+            )}
+            <Badge variant="info" className="text-sm px-3 py-1.5">
+              {getPlan(currentPlan).name}
+            </Badge>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {(Object.values(PLANS) as typeof PLANS[PlanId][]).map((p) => {
+            const isCurrent = currentPlan === p.id;
+            const isUpgrade = Object.keys(PLANS).indexOf(p.id) > Object.keys(PLANS).indexOf(currentPlan);
+            return (
+              <div
+                key={p.id}
+                className={`rounded-xl p-4 border ${
+                  isCurrent
+                    ? "border-blue-500 bg-blue-600/10"
+                    : "border-gray-700 bg-gray-800/50"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-sm">{p.name}</h3>
+                  {isCurrent && (
+                    <Badge variant="success" className="text-xs">Actual</Badge>
+                  )}
+                </div>
+                <p className="text-xl font-bold text-white">{formatPlanPrice(p.price)}</p>
+                <p className="text-xs text-gray-500 mb-3">/mes</p>
+                <ul className="space-y-1.5 mb-4">
+                  {p.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-xs text-gray-400">
+                      <Check size={12} className={`mt-0.5 shrink-0 ${isCurrent ? "text-blue-400" : "text-gray-600"}`} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                {isUpgrade && !pendingRequest && (
+                  <button
+                    onClick={() => handleUpgradeClick(p.id)}
+                    className="w-full text-center py-2 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center gap-1"
+                  >
+                    Cambiar a {p.name} <ArrowRight size={12} />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* Payment Modal */}
+      {showPayment && selectedPlan && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setShowPayment(false)}>
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-white mb-2">
+              Cambiar a {getPlan(selectedPlan).name}
+            </h3>
+            <p className="text-sm text-gray-400 mb-6">
+              Para activar tu nuevo plan, realizá una transferencia por el monto correspondiente al siguiente alias:
+            </p>
+
+            <div className="bg-gray-800 rounded-xl p-4 mb-4">
+              <p className="text-xs text-gray-500 mb-1">Monto mensual</p>
+              <p className="text-2xl font-bold text-white">{formatPlanPrice(getPlan(selectedPlan).price)}</p>
+            </div>
+
+            <div className="bg-gray-800 rounded-xl p-4 mb-4">
+              <p className="text-xs text-gray-500 mb-1">Alias de transferencia</p>
+              <div className="flex items-center justify-between">
+                <p className="text-lg font-mono text-blue-400 font-bold">{PAYMENT_ALIAS}</p>
+                <button
+                  onClick={copyAlias}
+                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors bg-gray-700 px-2 py-1 rounded"
+                >
+                  <Copy size={12} />
+                  {copied ? "¡Copiado!" : "Copiar"}
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-yellow-600/10 border border-yellow-600/30 rounded-xl p-4 mb-6">
+              <p className="text-xs text-yellow-400">
+                Una vez realizada la transferencia, hacé click en &quot;Solicitar cambio&quot;. Nuestro equipo verificará el pago y activará tu plan.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowPayment(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors border border-gray-700"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmRequest}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+              >
+                Solicitar cambio
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success notification */}
+      {requestSent && (
+        <Card>
+          <div className="flex items-center gap-3 text-green-400">
+            <Check size={20} />
+            <div>
+              <p className="font-medium">¡Solicitud enviada!</p>
+              <p className="text-sm text-gray-400">Tu solicitud de cambio de plan fue enviada. Te notificaremos cuando sea aprobada.</p>
+            </div>
+          </div>
+        </Card>
+      )}
+    </>
+  );
+}
 
 interface Dealership {
   id: string;
@@ -148,51 +330,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Plan */}
-      <Card>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Crown size={20} className="text-yellow-500" /> Plan Actual
-            </h2>
-            <p className="text-gray-400 text-sm mt-1">
-              Tu plan determina las funcionalidades disponibles
-            </p>
-          </div>
-          <Badge variant="info" className="text-sm px-3 py-1.5 self-start">{getPlan(dealership?.plan || "V12_PREMIUM").name}</Badge>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {(Object.values(PLANS) as typeof PLANS[PlanId][]).map((p) => {
-            const isCurrent = dealership?.plan === p.id;
-            return (
-              <div
-                key={p.id}
-                className={`rounded-xl p-4 border ${
-                  isCurrent
-                    ? "border-blue-500 bg-blue-600/10"
-                    : "border-gray-700 bg-gray-800/50"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-sm">{p.name}</h3>
-                  {isCurrent && (
-                    <Badge variant="success" className="text-xs">Actual</Badge>
-                  )}
-                </div>
-                <p className="text-xl font-bold text-white">{formatPlanPrice(p.price)}</p>
-                <p className="text-xs text-gray-500 mb-3">/mes</p>
-                <ul className="space-y-1.5">
-                  {p.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-xs text-gray-400">
-                      <Check size={12} className={`mt-0.5 shrink-0 ${isCurrent ? "text-blue-400" : "text-gray-600"}`} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
+      <PlanSection dealership={dealership} />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Info */}
