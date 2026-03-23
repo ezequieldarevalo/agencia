@@ -10,10 +10,10 @@ async function main() {
   // Create admin user
   const adminPassword = await bcrypt.hash("admin123", 10);
   const admin = await prisma.user.upsert({
-    where: { email: "admin@autosoft.com" },
+    where: { email: "admin@autogestor.com.ar" },
     update: {},
     create: {
-      email: "admin@autosoft.com",
+      email: "admin@autogestor.com.ar",
       password: adminPassword,
       name: "Administrador",
       role: "ADMIN",
@@ -22,12 +22,12 @@ async function main() {
 
   // Create admin employee
   await prisma.employee.upsert({
-    where: { email: "admin@autosoft.com" },
+    where: { email: "admin@autogestor.com.ar" },
     update: {},
     create: {
       firstName: "Admin",
       lastName: "Principal",
-      email: "admin@autosoft.com",
+      email: "admin@autogestor.com.ar",
       phone: "351-1234567",
       area: "ADMIN",
       dni: "30000000",
@@ -40,10 +40,10 @@ async function main() {
   // Create sales employee
   const salesPassword = await bcrypt.hash("ventas123", 10);
   const salesUser = await prisma.user.upsert({
-    where: { email: "ventas@autosoft.com" },
+    where: { email: "ventas@autogestor.com.ar" },
     update: {},
     create: {
-      email: "ventas@autosoft.com",
+      email: "ventas@autogestor.com.ar",
       password: salesPassword,
       name: "Juan Vendedor",
       role: "USER",
@@ -51,12 +51,12 @@ async function main() {
   });
 
   await prisma.employee.upsert({
-    where: { email: "ventas@autosoft.com" },
+    where: { email: "ventas@autogestor.com.ar" },
     update: {},
     create: {
       firstName: "Juan",
       lastName: "Vendedor",
-      email: "ventas@autosoft.com",
+      email: "ventas@autogestor.com.ar",
       phone: "351-7654321",
       area: "VENTAS",
       userId: salesUser.id,
@@ -283,8 +283,8 @@ async function main() {
     update: {},
     create: {
       id: "default",
-      name: "AutoSoft Agencia",
-      email: "info@autosoft.com.ar",
+      name: "Autogestor Agencia",
+      email: "info@autogestor.com.ar",
       cuit: "30-71234567-8",
       phone: "351-4000000",
       province: "Córdoba",
@@ -298,8 +298,8 @@ async function main() {
   });
 
   console.log("✅ Seed completed!");
-  console.log("📧 Admin: admin@autosoft.com / admin123");
-  console.log("📧 Ventas: ventas@autosoft.com / ventas123");
+  console.log("📧 Admin: admin@autogestor.com.ar / admin123");
+  console.log("📧 Ventas: ventas@autogestor.com.ar / ventas123");
 }
 
 main()

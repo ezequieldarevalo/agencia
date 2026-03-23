@@ -15,8 +15,32 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "AutoSoft - Gestión de Agencia",
+  title: "Autogestor - Gestión de Agencia",
   description: "Sistema de gestión para agencias de autos",
+  manifest: "/manifest.json",
+  themeColor: "#030712",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Autogestor",
+  },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: "cover",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/icon-152x152.png", sizes: "152x152", type: "image/png" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({

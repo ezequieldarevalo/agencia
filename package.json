@@ -8,12 +8,29 @@
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint",
-    "seed": "npx tsx prisma/seed.ts"
+    "seed": "npx tsx prisma/seed.ts",
+    "cap:sync": "npx cap sync",
+    "mobile:dev:android": "CAPACITOR_SERVER_URL=http://10.0.2.2:3000 npx cap sync android && npx cap open android",
+    "mobile:dev:ios": "npx cap sync ios && npx cap open ios",
+    "mobile:build:android": "CAPACITOR_SERVER_URL=$CAPACITOR_SERVER_URL npx cap sync android && npx cap open android",
+    "mobile:build:ios": "CAPACITOR_SERVER_URL=$CAPACITOR_SERVER_URL npx cap sync ios && npx cap open ios"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@capacitor/android": "^8.2.0",
+    "@capacitor/app": "^8.0.1",
+    "@capacitor/browser": "^8.0.2",
+    "@capacitor/camera": "^8.0.2",
+    "@capacitor/cli": "^8.2.0",
+    "@capacitor/core": "^8.2.0",
+    "@capacitor/haptics": "^8.0.1",
+    "@capacitor/ios": "^8.2.0",
+    "@capacitor/keyboard": "^8.0.1",
+    "@capacitor/push-notifications": "^8.0.2",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.1",
     "@prisma/client": "5.22.0",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
@@ -37,6 +54,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "postcss": "^8",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.21.0",
     "typescript": "^5"

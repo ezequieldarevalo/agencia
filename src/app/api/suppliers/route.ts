@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { checkPlanAccess } from "@/lib/plan-check";
 
 export async function GET() {
+  const blocked = await checkPlanAccess("/api/suppliers");
+  if (blocked) return blocked;
   const suppliers = await prisma.supplier.findMany({ orderBy: { createdAt: "desc" } });
   return NextResponse.json(suppliers);
 }
 
 export async function POST(req: Request) {
+  const blocked = await checkPlanAccess("/api/suppliers");
+  if (blocked) return blocked;
   const body = await req.json();
   const supplier = await prisma.supplier.create({
     data: {

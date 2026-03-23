@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { checkPlanAccess } from "@/lib/plan-check";
 
 export async function GET() {
+  const blocked = await checkPlanAccess("/api/cash");
+  if (blocked) return blocked;
   const accounts = await prisma.cashAccount.findMany({ orderBy: { createdAt: "desc" } });
   return NextResponse.json(accounts);
 }
 
 export async function POST(req: Request) {
+  const blocked = await checkPlanAccess("/api/cash");
+  if (blocked) return blocked;
   const body = await req.json();
   const account = await prisma.cashAccount.create({
     data: {

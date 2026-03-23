@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { checkPlanAccess } from "@/lib/plan-check";
 
 export async function GET() {
+  const blocked = await checkPlanAccess("/api/debts");
+  if (blocked) return blocked;
   const debts = await prisma.debt.findMany({
     include: {
       client: { select: { firstName: true, lastName: true } },
@@ -13,6 +16,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const blocked = await checkPlanAccess("/api/debts");
+  if (blocked) return blocked;
   const body = await req.json();
   const debt = await prisma.debt.create({
     data: {

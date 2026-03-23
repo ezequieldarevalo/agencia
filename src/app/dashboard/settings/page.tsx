@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PROVINCES } from "@/lib/utils";
 import { Select } from "@/components/ui/select";
-import { Save, Globe, MessageCircle, ShoppingBag } from "lucide-react";
+import { Save, Globe, MessageCircle, ShoppingBag, Check, Crown } from "lucide-react";
+import { PLANS, getPlan, formatPlanPrice, type PlanId } from "@/lib/plans";
 
 interface Dealership {
   id: string;
@@ -148,12 +149,48 @@ export default function SettingsPage() {
 
       {/* Plan */}
       <Card>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-lg font-semibold">Plan Actual</h2>
-            <p className="text-gray-400 text-sm mt-1">Tu plan actual y sus funcionalidades</p>
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Crown size={20} className="text-yellow-500" /> Plan Actual
+            </h2>
+            <p className="text-gray-400 text-sm mt-1">
+              Tu plan determina las funcionalidades disponibles
+            </p>
           </div>
-          <Badge variant="info" className="text-sm px-3 py-1">{dealership?.plan || "V12 PREMIUM"}</Badge>
+          <Badge variant="info" className="text-sm px-3 py-1.5 self-start">{getPlan(dealership?.plan || "V12_PREMIUM").name}</Badge>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {(Object.values(PLANS) as typeof PLANS[PlanId][]).map((p) => {
+            const isCurrent = dealership?.plan === p.id;
+            return (
+              <div
+                key={p.id}
+                className={`rounded-xl p-4 border ${
+                  isCurrent
+                    ? "border-blue-500 bg-blue-600/10"
+                    : "border-gray-700 bg-gray-800/50"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-sm">{p.name}</h3>
+                  {isCurrent && (
+                    <Badge variant="success" className="text-xs">Actual</Badge>
+                  )}
+                </div>
+                <p className="text-xl font-bold text-white">{formatPlanPrice(p.price)}</p>
+                <p className="text-xs text-gray-500 mb-3">/mes</p>
+                <ul className="space-y-1.5">
+                  {p.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-xs text-gray-400">
+                      <Check size={12} className={`mt-0.5 shrink-0 ${isCurrent ? "text-blue-400" : "text-gray-600"}`} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
         </div>
       </Card>
 

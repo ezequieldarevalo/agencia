@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { checkPlanAccess } from "@/lib/plan-check";
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
+  const blocked = await checkPlanAccess("/api/suppliers");
+  if (blocked) return blocked;
   const body = await req.json();
   const supplier = await prisma.supplier.update({
     where: { id: params.id },

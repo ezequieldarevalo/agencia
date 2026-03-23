@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { usePlan } from "@/components/plan-provider";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -46,6 +47,7 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const { plan } = usePlan();
 
   return (
     <>
@@ -85,6 +87,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               item.href === "/dashboard"
                 ? pathname === "/dashboard"
                 : pathname.startsWith(item.href);
+            const isAllowed = plan.routes.includes(item.href);
+            if (!isAllowed) return null;
             return (
               <Link
                 key={item.href}

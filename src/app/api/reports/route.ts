@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { checkPlanAccess } from "@/lib/plan-check";
 import type { Vehicle, CashMovement, CashAccount, Client, Supplier } from "@prisma/client";
 
 type VehicleWithRelations = Vehicle & { buyer: Client | null; supplier: Supplier | null };
 type MovementWithAccount = CashMovement & { cashAccount: CashAccount };
 
 export async function GET(request: Request) {
+  const blocked = await checkPlanAccess("/api/reports");
+  if (blocked) return blocked;
   try {
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "month"; // month, year, all
