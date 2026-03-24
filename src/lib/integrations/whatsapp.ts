@@ -118,16 +118,72 @@ export async function sendTextMessage(phone: string, text: string, clientId?: st
   });
 }
 
-// Send vehicle info card
+// Send vehicle info card - sends photo with caption for maximum impact
+// WhatsApp algorithm: image messages get higher open and response rates
 export async function sendVehicleCard(phone: string, vehicleId: string, clientId?: string) {
+  const d = await getDealership();
   const vehicle = await prisma.vehicle.findUnique({
     where: { id: vehicleId },
     include: { photos: { orderBy: { order: "asc" }, take: 1 } },
   });
   if (!vehicle) throw new Error("Vehículo no encontrado");
 
-  const message = buildVehicleWhatsAppMessage(vehicle);
-  return sendTextMessage(phone, message, clientId, vehicleId);
+  const caption = buildVehicleWhatsAppMessage(vehicle);
+  const normalizedPhone = normalizePhone(phone);
+  const imageUrl = vehicle.photos[0]?.url;
+
+  // If vehicle has a photo, send as image message with caption (much better engagement)
+  if (imageUrl) {
+    let waMessageId: string | null = null;
+    let status = "SENT";
+    let errorMessage: string | null = null;
+
+    try {
+      const res = await waFetch(
+        `${WA_API_BASE}/${d.waPhoneNumberId}/messages`,
+        d.waAccessToken!,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            to: normalizedPhone,
+            type: "image",
+            image: {
+              link: imageUrl,
+              caption,
+            },
+          }),
+        }
+      );
+      const data = await res.json();
+      if (data.error) {
+        status = "FAILED";
+        errorMessage = data.error.message;
+      } else {
+        waMessageId = data.messages?.[0]?.id;
+      }
+    } catch (err: unknown) {
+      status = "FAILED";
+      errorMessage = err instanceof Error ? err.message : "Error desconocido";
+    }
+
+    return prisma.waMessage.create({
+      data: {
+        direction: "OUTBOUND",
+        phone: normalizedPhone,
+        clientId,
+        vehicleId,
+        messageType: "VEHICLE_CARD",
+        content: caption,
+        waMessageId,
+        status,
+        errorMessage,
+      },
+    });
+  }
+
+  // Fallback to text if no photo
+  return sendTextMessage(phone, caption, clientId, vehicleId);
 }
 
 // Send template message
@@ -276,27 +332,44 @@ function normalizePhone(phone: string): string {
 
 function buildVehicleWhatsAppMessage(vehicle: {
   name: string;
+  brand?: string | null;
+  model?: string | null;
   year?: number | null;
   kilometers?: number | null;
   priceARS?: number | null;
   priceUSD?: number | null;
   fuel?: string | null;
   transmission?: string | null;
+  color?: string | null;
   locationCity?: string | null;
   description?: string | null;
 }) {
   const lines: string[] = [];
   lines.push(`🚗 *${vehicle.name}*`);
   lines.push("");
-  if (vehicle.year) lines.push(`📅 Año: ${vehicle.year}`);
-  if (vehicle.kilometers) lines.push(`🛣️ Km: ${vehicle.kilometers.toLocaleString("es-AR")}`);
-  if (vehicle.fuel) lines.push(`⛽ Combustible: ${vehicle.fuel}`);
-  if (vehicle.transmission) lines.push(`⚙️ Transmisión: ${vehicle.transmission}`);
+  lines.push(`━━━━━━━━━━━━━━━━━━`);
+  if (vehicle.year) lines.push(`📅 *Año:* ${vehicle.year}`);
+  if (vehicle.kilometers != null) lines.push(`🛣️ *Km:* ${vehicle.kilometers.toLocaleString("es-AR")}`);
+  if (vehicle.fuel) {
+    const fuelMap: Record<string, string> = {
+      NAFTA: "Nafta", DIESEL: "Diésel", GNC: "GNC", ELECTRICO: "Eléctrico", HIBRIDO: "Híbrido",
+    };
+    lines.push(`⛽ *Combustible:* ${fuelMap[vehicle.fuel] || vehicle.fuel}`);
+  }
+  if (vehicle.transmission) {
+    lines.push(`⚙️ *Transmisión:* ${vehicle.transmission === "MANUAL" ? "Manual" : "Automática"}`);
+  }
+  if (vehicle.color) lines.push(`🎨 *Color:* ${vehicle.color}`);
+  lines.push(`━━━━━━━━━━━━━━━━━━`);
   if (vehicle.priceARS) lines.push(`💰 *Precio: $${vehicle.priceARS.toLocaleString("es-AR")}*`);
-  if (vehicle.priceUSD) lines.push(`💵 USD: $${vehicle.priceUSD.toLocaleString("en-US")}`);
+  if (vehicle.priceUSD) lines.push(`💵 *USD ${vehicle.priceUSD.toLocaleString("en-US")}*`);
   if (vehicle.locationCity) lines.push(`📍 ${vehicle.locationCity}`);
   if (vehicle.description) lines.push(`\n${vehicle.description}`);
-  lines.push("\n📩 ¿Te interesa? ¡Respondé este mensaje!");
+  lines.push("");
+  lines.push(`✅ Financiación disponible`);
+  lines.push(`✅ Aceptamos tu usado como parte de pago`);
+  lines.push("");
+  lines.push("📩 *¿Te interesa? ¡Respondé este mensaje!*");
   return lines.join("\n");
 }
 

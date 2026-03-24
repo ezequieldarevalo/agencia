@@ -63,6 +63,7 @@ export async function POST(request: Request) {
           title: body.title,
           price: body.price,
           listingType: body.listingType,
+          currency: body.currency,
         });
         return NextResponse.json(listing);
       }

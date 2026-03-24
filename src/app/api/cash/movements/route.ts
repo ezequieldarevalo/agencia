@@ -30,6 +30,7 @@ export async function POST(req: Request) {
       currency: body.currency,
       cashAccountId: body.cashAccountId,
       vehicleId: body.vehicleId || null,
+      operationId: body.operationId || null,
     },
   });
 
@@ -39,6 +40,15 @@ export async function POST(req: Request) {
     where: { id: body.cashAccountId },
     data: { currentBalance: { increment: balanceChange } },
   });
+
+  // If linked to operation AND is a payment (not expense), update paidAmount
+  if (body.operationId && body.isPayment) {
+    const paymentAmount = body.currency === "ARS" ? (body.amountARS || 0) : (body.amountUSD || 0);
+    await prisma.operation.update({
+      where: { id: body.operationId },
+      data: { paidAmount: { increment: paymentAmount } },
+    });
+  }
 
   return NextResponse.json(movement, { status: 201 });
 }

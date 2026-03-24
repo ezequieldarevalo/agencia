@@ -20,59 +20,46 @@ import {
 const features = [
   {
     icon: Car,
-    title: "Inventario de Vehículos",
+    title: "Sabé exactamente dónde está cada auto",
     description:
-      "Gestioná tu stock completo con fotos, especificaciones técnicas, precios en ARS/USD y estado de cada unidad.",
+      "Stock completo con fotos, precios, estado y disponibilidad. Nunca más preguntarte '¿a cuánto lo puse?' o '¿ese ya se vendió?'.",
   },
   {
     icon: Users,
-    title: "CRM de Clientes",
+    title: "No pierdas nunca un contacto",
     description:
-      "Administrá clientes y prospectos, historial de interacciones, seguimiento de leads y pipeline de ventas.",
+      "Cada cliente, cada consulta, cada seguimiento registrado. Cuando te preguntan '¿qué onda ese auto?', tenés todo el historial.",
   },
   {
     icon: Wallet,
-    title: "Caja y Finanzas",
+    title: "Controlá cada peso que entra y sale",
     description:
-      "Múltiples cuentas (efectivo, banco, USD), movimientos categorizados, deudas con pagos parciales y reportes.",
+      "Caja con múltiples cuentas, movimientos categorizados y saldo en tiempo real. Sabé exactamente cuánto ganás con cada operación.",
   },
   {
     icon: BarChart3,
-    title: "Reportes y Analytics",
+    title: "Decisiones con datos, no intuición",
     description:
-      "Dashboard con métricas en tiempo real: ventas, rentabilidad, stock, marcas más vendidas y tendencias.",
+      "Dashboard con métricas reales: rentabilidad por vehículo, tendencias de venta, stock parado. Sabé qué funciona y qué no.",
   },
   {
     icon: CalendarDays,
-    title: "Agenda y Calendario",
+    title: "Que nada se te pase",
     description:
-      "Programá test drives, seguimientos, pagos, entregas y reuniones. Todo vinculado a clientes y vehículos.",
+      "Agenda de entregas, test drives, seguimientos y pagos. Todo vinculado a la operación para que no pierdas ningún compromiso.",
   },
   {
     icon: MessageCircle,
-    title: "WhatsApp Business",
+    title: "Respondé desde un solo lugar",
     description:
-      "Enviá mensajes, fichas de vehículos y recordatorios de pago directo desde la plataforma vía WhatsApp API.",
+      "WhatsApp integrado: mandá fichas, respondé consultas y hacé seguimiento sin cambiar de app.",
   },
   {
     icon: ShoppingBag,
-    title: "MercadoLibre",
+    title: "Publicá una vez, llegá a todos",
     description:
-      "Publicá vehículos, gestioná preguntas, sincronizá métricas y controlá tus listings desde un solo lugar.",
+      "MercadoLibre, Facebook e Instagram conectados. Un click y tu vehículo está en todas las plataformas.",
   },
-  {
-    icon: Globe,
-    title: "Facebook e Instagram",
-    description:
-      "Publicá automáticamente en tu página de Facebook e Instagram con fotos y datos del vehículo.",
-  },
-];
-
-const stats = [
-  { value: "100%", label: "Cloud" },
-  { value: "3", label: "Integraciones" },
-  { value: "24/7", label: "Disponible" },
-  { value: "∞", label: "Vehículos" },
 ];
 
 const plans = [
@@ -149,11 +136,11 @@ export default function LandingPage() {
               <span className="text-xl font-bold">Autogestor</span>
             </div>
             <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-sm text-gray-400 hover:text-white transition-colors">
-                Funcionalidades
+              <a href="#como-funciona" className="text-sm text-gray-400 hover:text-white transition-colors">
+                Cómo funciona
               </a>
-              <a href="#integrations" className="text-sm text-gray-400 hover:text-white transition-colors">
-                Integraciones
+              <a href="#features" className="text-sm text-gray-400 hover:text-white transition-colors">
+                Beneficios
               </a>
               <a href="#pricing" className="text-sm text-gray-400 hover:text-white transition-colors">
                 Precios
@@ -183,61 +170,141 @@ export default function LandingPage() {
           <div className="inline-flex items-center gap-2 bg-blue-600/10 border border-blue-500/20 rounded-full px-4 py-1.5 mb-8">
             <Zap size={14} className="text-blue-400" />
             <span className="text-sm text-blue-400">
-              La plataforma #1 para agencias de autos en Argentina
+              Para agencias de autos en Argentina
             </span>
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight">
-            Gestioná tu agencia
+            No pierdas ventas
             <br />
             <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-purple-500 bg-clip-text text-transparent">
-              de forma inteligente
+              por desorden
             </span>
           </h1>
           <p className="mt-6 text-lg sm:text-xl text-gray-400 max-w-3xl mx-auto">
-            Inventario, clientes, finanzas, calendario, reportes y publicación en
-            MercadoLibre, Facebook e Instagram — todo desde un solo lugar.
+            Desde que comprás un auto hasta que lo entregás,
+            todo en un solo lugar. Sabé exactamente qué hacer con cada vehículo,
+            cuánto cobraste y qué te falta.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/register"
               className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl text-lg font-semibold transition-colors"
             >
-              Empezar gratis
+              Probalo 14 días gratis
               <ArrowRight size={20} />
             </Link>
             <a
-              href="#features"
+              href="#como-funciona"
               className="inline-flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-8 py-3.5 rounded-xl text-lg font-medium transition-colors border border-gray-700"
             >
-              Ver funcionalidades
+              Cómo funciona
             </a>
           </div>
+        </div>
+      </section>
 
-          {/* Stats */}
-          <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
-            {stats.map((stat) => (
-              <div key={stat.label}>
-                <p className="text-3xl sm:text-4xl font-bold text-white">{stat.value}</p>
-                <p className="text-sm text-gray-500 mt-1">{stat.label}</p>
+      {/* Problem → Solution */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 border-t border-gray-800/50">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-red-400/90 mb-6">
+                ¿Te suena esto?
+              </h2>
+              <ul className="space-y-4">
+                {[
+                  "No sabés cuánto ganaste el mes pasado",
+                  "Tenés autos parados que nadie publicó",
+                  "Un cliente preguntó y nadie le respondió a tiempo",
+                  "La seña la cobraste, pero no la registraste",
+                  "Te olvidaste de hacer la transferencia de un auto vendido",
+                ].map((problem) => (
+                  <li key={problem} className="flex items-start gap-3">
+                    <div className="w-5 h-5 bg-red-600/20 rounded-full flex items-center justify-center mt-0.5 shrink-0">
+                      <span className="text-red-400 text-xs">✕</span>
+                    </div>
+                    <span className="text-gray-400">{problem}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-green-400/90 mb-6">
+                Con Autogestor:
+              </h2>
+              <ul className="space-y-4">
+                {[
+                  "Ves la rentabilidad de cada operación al instante",
+                  "Publicás en MercadoLibre, Facebook e Instagram en un click",
+                  "Cada consulta queda registrada con seguimiento automático",
+                  "Cada cobro se vincula a la operación — sabés cuánto falta",
+                  "El sistema te avisa qué pasos te quedan por completar",
+                ].map((solution) => (
+                  <li key={solution} className="flex items-start gap-3">
+                    <div className="w-5 h-5 bg-green-600/20 rounded-full flex items-center justify-center mt-0.5 shrink-0">
+                      <Check size={12} className="text-green-400" />
+                    </div>
+                    <span className="text-gray-300">{solution}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section id="como-funciona" className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900/50">
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+            Así de simple funciona
+          </h2>
+          <p className="text-lg text-gray-400 mb-16 max-w-2xl mx-auto">
+            En minutos tenés todo configurado. Sin instalaciones, sin técnicos, sin complicaciones.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                step: "1",
+                title: "Cargá tu stock",
+                description: "Subí tus vehículos con fotos, precios y estado. En un click los publicás en todas las plataformas.",
+              },
+              {
+                step: "2",
+                title: "Operá con control",
+                description: "Cada compra, venta o consignación tiene pasos claros. Sabés exactamente qué hiciste y qué te falta.",
+              },
+              {
+                step: "3",
+                title: "Cobrá y controlá",
+                description: "Registrá cada peso que entra y sale. Vinculá pagos a operaciones y sabé cuánto ganás con cada auto.",
+              },
+            ].map((item) => (
+              <div key={item.step} className="relative">
+                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+                  {item.step}
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{item.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900/50">
+      {/* Benefits */}
+      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold">
-              Todo lo que necesitás para tu agencia
+              Todo conectado, nada se pierde
             </h2>
             <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">
-              Desde el ingreso del vehículo hasta la venta final, cubrimos cada
-              paso del proceso.
+              Cada parte de tu agencia trabaja junta: stock, clientes, pagos,
+              publicaciones y documentos.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature) => (
               <div
                 key={feature.title}
@@ -262,20 +329,19 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
               <h2 className="text-3xl sm:text-4xl font-bold">
-                Publicá en todas las plataformas
+                Llegá a más compradores sin esfuerzo extra
               </h2>
               <p className="mt-4 text-lg text-gray-400">
                 Conectá MercadoLibre, Facebook, Instagram y WhatsApp en minutos.
-                Publicá vehículos, respondé preguntas y enviá mensajes sin salir
-                de Autogestor.
+                Publicá, respondé y vendé sin salir de Autogestor.
               </p>
               <div className="mt-8 space-y-4">
                 {[
-                  "Publicación con un click en MercadoLibre",
-                  "Posts automáticos en Facebook e Instagram",
-                  "Mensajes y fichas de vehículos por WhatsApp",
-                  "Sincronización de métricas y preguntas",
-                  "Templates de mensajes personalizables",
+                  "Publicá en MercadoLibre sin salir del sistema",
+                  "Compartí autos automáticamente en Facebook e IG",
+                  "Enviá fichas y respondé consultas por WhatsApp",
+                  "Métricas de visitas y preguntas sincronizadas",
+                  "Templates de mensajes listos para usar",
                 ].map((item) => (
                   <div key={item} className="flex items-start gap-3">
                     <div className="w-5 h-5 bg-green-600/20 rounded-full flex items-center justify-center mt-0.5 shrink-0">
@@ -346,11 +412,11 @@ export default function LandingPage() {
             <span className="text-sm text-purple-400">Disponible en móvil</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold">
-            Tu agencia en el bolsillo
+            Gestioná desde donde estés
           </h2>
           <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">
-            Accedé desde cualquier dispositivo. Autogestor funciona como app
-            nativa en Android e iOS, o como PWA instalable desde el navegador.
+            ¿Estás en la calle viendo un auto? ¿En la feria? Accedé desde el celular
+            como si fuera una app nativa. Todo sincronizado en tiempo real.
           </p>
           <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
             {[
@@ -468,11 +534,11 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent_50%)]" />
           <div className="relative">
             <h2 className="text-3xl sm:text-4xl font-bold">
-              Empezá a gestionar mejor tu agencia
+              Tu agencia merece funcionar mejor
             </h2>
             <p className="mt-4 text-lg text-blue-100 max-w-xl mx-auto">
-              Creá tu cuenta gratis en segundos y descubrí todo lo que
-              Autogestor puede hacer por tu negocio.
+              14 días gratis. Sin tarjeta de crédito. Configuralo en minutos
+              y empezá a vender con control.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -512,13 +578,13 @@ export default function LandingPage() {
               <h4 className="text-sm font-semibold mb-4">Producto</h4>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li>
-                  <a href="#features" className="hover:text-white transition-colors">
-                    Funcionalidades
+                  <a href="#como-funciona" className="hover:text-white transition-colors">
+                    Cómo funciona
                   </a>
                 </li>
                 <li>
-                  <a href="#integrations" className="hover:text-white transition-colors">
-                    Integraciones
+                  <a href="#features" className="hover:text-white transition-colors">
+                    Beneficios
                   </a>
                 </li>
                 <li>

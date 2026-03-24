@@ -3,8 +3,10 @@
 import { Card, StatCard } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
-import { BarChart3, TrendingUp, DollarSign, Car } from "lucide-react";
+import { BarChart3, TrendingUp, DollarSign, Car, AlertCircle, Clock, CheckCircle2, ArrowRight, AlertTriangle, Target } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 import {
   BarChart,
   Bar,
@@ -26,11 +28,36 @@ interface DashboardData {
   stats: { totalOps: number; totalProfit: number; vehicles: number; todayIncome: number };
 }
 
+interface TodayOperation {
+  id: string;
+  type: string;
+  vehicleName: string;
+  clientName: string;
+  progress: number;
+  nextStep: string | null;
+  alertCount: number;
+  topAlert: string | null;
+  topAlertType: string | null;
+}
+
+interface TodayData {
+  summary: { enCurso: number; bloqueadas: number; urgentes: number; porCerrar: number; pagosPendientes: number };
+  global: { totalToCollect: number; opsAtRisk: number; vehiclesNotPublished: number; nearCompletion: number };
+  sections: {
+    urgent: TodayOperation[];
+    blocked: TodayOperation[];
+    nearCompletion: TodayOperation[];
+    pendingActions: TodayOperation[];
+  };
+}
+
 export default function DashboardPage() {
+  const router = useRouter();
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [showSales, setShowSales] = useState(true);
   const [showUSD, setShowUSD] = useState(false);
   const [data, setData] = useState<DashboardData | null>(null);
+  const [today, setToday] = useState<TodayData | null>(null);
 
   useEffect(() => {
     fetch(`/api/dashboard?year=${year}`)
@@ -59,6 +86,13 @@ export default function DashboardPage() {
       });
   }, [year]);
 
+  useEffect(() => {
+    fetch("/api/operations/today")
+      .then((r) => r.json())
+      .then(setToday)
+      .catch(() => {});
+  }, []);
+
   if (!data) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -83,6 +117,107 @@ export default function DashboardPage() {
           </select>
         </div>
       </div>
+
+      {/* Global Agency Status + Today's Operations */}
+      {today && (
+        <>
+          {/* Global Status Bar */}
+          {(today.global.totalToCollect > 0 || today.global.opsAtRisk > 0 || today.global.vehiclesNotPublished > 0 || today.global.nearCompletion > 0) && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="px-4 py-3 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20">
+                <div className="flex items-center gap-2 mb-1">
+                  <DollarSign size={14} className="text-blue-400" />
+                  <p className="text-[11px] text-blue-400 font-medium uppercase tracking-wide">Por cobrar</p>
+                </div>
+                <p className="text-lg font-bold text-white">{formatCurrency(today.global.totalToCollect)}</p>
+              </div>
+              <button onClick={() => router.push("/dashboard/operations")} className="px-4 py-3 rounded-xl bg-gradient-to-br from-red-500/10 to-red-600/5 border border-red-500/20 text-left hover:border-red-500/40 transition-colors">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle size={14} className="text-red-400" />
+                  <p className="text-[11px] text-red-400 font-medium uppercase tracking-wide">En riesgo</p>
+                </div>
+                <p className="text-lg font-bold text-white">{today.global.opsAtRisk} <span className="text-xs font-normal text-gray-400">operaciones</span></p>
+              </button>
+              <button onClick={() => router.push("/dashboard/operations")} className="px-4 py-3 rounded-xl bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/20 text-left hover:border-green-500/40 transition-colors">
+                <div className="flex items-center gap-2 mb-1">
+                  <Target size={14} className="text-green-400" />
+                  <p className="text-[11px] text-green-400 font-medium uppercase tracking-wide">Por cerrar</p>
+                </div>
+                <p className="text-lg font-bold text-white">{today.global.nearCompletion} <span className="text-xs font-normal text-gray-400">operaciones</span></p>
+              </button>
+              <button onClick={() => router.push("/dashboard/vehicles")} className="px-4 py-3 rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 text-left hover:border-purple-500/40 transition-colors">
+                <div className="flex items-center gap-2 mb-1">
+                  <Car size={14} className="text-purple-400" />
+                  <p className="text-[11px] text-purple-400 font-medium uppercase tracking-wide">Sin publicar</p>
+                </div>
+                <p className="text-lg font-bold text-white">{today.global.vehiclesNotPublished} <span className="text-xs font-normal text-gray-400">vehículos</span></p>
+              </button>
+            </div>
+          )}
+
+          {/* Today's Action Items */}
+          {(today.summary.urgentes > 0 || today.summary.porCerrar > 0 || today.sections.urgent.length > 0 || today.sections.nearCompletion.length > 0) && (
+            <Card>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-semibold flex items-center gap-2">
+                  <Clock size={16} className="text-blue-400" /> Hoy
+                </h2>
+                <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/operations")}>
+                  Ver operaciones <ArrowRight size={14} className="ml-1" />
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                <div className="px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                  <p className="text-xs text-blue-400">En Curso</p>
+                  <p className="text-lg font-bold text-blue-300">{today.summary.enCurso}</p>
+                </div>
+                {today.summary.urgentes > 0 && (
+                  <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30">
+                    <p className="text-xs text-red-400">Urgentes</p>
+                    <p className="text-lg font-bold text-red-300">{today.summary.urgentes}</p>
+                  </div>
+                )}
+                {today.summary.bloqueadas > 0 && (
+                  <div className="px-3 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                    <p className="text-xs text-yellow-400">Bloqueadas</p>
+                    <p className="text-lg font-bold text-yellow-300">{today.summary.bloqueadas}</p>
+                  </div>
+                )}
+                {today.summary.porCerrar > 0 && (
+                  <div className="px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/30">
+                    <p className="text-xs text-green-400">Por Cerrar</p>
+                    <p className="text-lg font-bold text-green-300">{today.summary.porCerrar}</p>
+                  </div>
+                )}
+              </div>
+              {/* Urgent + near-completion items */}
+              {(today.sections.urgent.length > 0 || today.sections.nearCompletion.length > 0) && (
+                <div className="space-y-1.5">
+                  {today.sections.urgent.slice(0, 3).map((op) => (
+                    <button key={op.id} onClick={() => router.push("/dashboard/operations")} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/5 border border-red-500/20 hover:bg-red-500/10 transition-colors text-left">
+                      <AlertCircle size={14} className="text-red-400 flex-shrink-0" />
+                      <span className="text-sm text-gray-300 truncate flex-1">
+                        {op.type === "COMPRA" ? "📥" : op.type === "VENTA" ? "📤" : "🤝"} {op.vehicleName}
+                        {op.clientName && ` · ${op.clientName}`}
+                      </span>
+                      <Badge variant="danger">Urgente</Badge>
+                    </button>
+                  ))}
+                  {today.sections.nearCompletion.slice(0, 3).map((op) => (
+                    <button key={op.id} onClick={() => router.push("/dashboard/operations")} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-green-500/5 border border-green-500/20 hover:bg-green-500/10 transition-colors text-left">
+                      <CheckCircle2 size={14} className="text-green-400 flex-shrink-0" />
+                      <span className="text-sm text-gray-300 truncate flex-1">
+                        {op.type === "COMPRA" ? "📥" : op.type === "VENTA" ? "📤" : "🤝"} {op.vehicleName}
+                      </span>
+                      <span className="text-xs text-green-400 font-medium">{op.progress}%</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </Card>
+          )}
+        </>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

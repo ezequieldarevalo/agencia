@@ -277,6 +277,243 @@ async function main() {
     }),
   ]);
 
+  // Create default document templates
+  const templateExists = await prisma.documentTemplate.findFirst();
+  if (!templateExists) {
+    await Promise.all([
+      prisma.documentTemplate.create({
+        data: {
+          name: "Boleto de Compra-Venta",
+          type: "BOLETO",
+          isDefault: true,
+          content: `BOLETO DE COMPRA-VENTA DE AUTOMOTOR
+
+En la ciudad de {{agencia_domicilio|_________}}, a los {{fecha_larga}}, entre:
+
+VENDEDOR: {{agencia_nombre}}
+CUIT: {{agencia_cuit}}
+Domicilio: {{agencia_domicilio}}
+Teléfono: {{agencia_telefono}}
+
+COMPRADOR: {{cliente_nombre}}
+DNI/CUIT: {{cliente_dni|_________}}
+Domicilio: {{cliente_domicilio}}
+Teléfono: {{cliente_telefono}}
+
+Se conviene celebrar el presente BOLETO DE COMPRA-VENTA sujeto a las siguientes cláusulas:
+
+PRIMERA: El VENDEDOR transfiere al COMPRADOR el siguiente vehículo:
+- Descripción: {{vehiculo_nombre}}
+- Marca: {{vehiculo_marca}} | Modelo: {{vehiculo_modelo}} | Año: {{vehiculo_anio}}
+{{#if vehiculo_version}}- Versión: {{vehiculo_version}}{{/if}}
+- Dominio: {{vehiculo_dominio}}
+{{#if vehiculo_motor}}- Nº Motor: {{vehiculo_motor}}{{/if}}
+{{#if vehiculo_chasis}}- Nº Chasis: {{vehiculo_chasis}}{{/if}}
+- Kilometraje: {{vehiculo_km}} km
+- Color: {{vehiculo_color}}
+
+SEGUNDA: El precio total de la operación se fija en \${{operacion_monto}} ({{operacion_moneda}}).
+{{#if operacion_sena}}Se ha recibido en concepto de seña la suma de \${{operacion_sena}}.{{/if}}
+
+TERCERA: El comprador recibe el vehículo en el estado en que se encuentra, habiendo sido inspeccionado previamente y encontrándose conforme con su estado.
+
+CUARTA: El vendedor se compromete a entregar la documentación necesaria para la transferencia del vehículo, incluyendo título de propiedad, verificación policial y formularios correspondientes.
+
+QUINTA: Los gastos de transferencia serán a cargo del comprador, salvo acuerdo en contrario expresado por escrito.
+
+SEXTA: Ante cualquier divergencia que surgiera del presente, las partes se someten a la jurisdicción de los tribunales ordinarios correspondientes.
+
+En prueba de conformidad, se firman dos ejemplares de un mismo tenor y a un solo efecto.
+
+
+_________________________          _________________________
+       VENDEDOR                           COMPRADOR
+   {{agencia_nombre}}               {{cliente_nombre}}`,
+        },
+      }),
+      prisma.documentTemplate.create({
+        data: {
+          name: "Recibo de Seña",
+          type: "RECIBO_SENA",
+          isDefault: true,
+          content: `RECIBO DE SEÑA
+
+Fecha: {{fecha_larga}}
+Nº de Recibo: ____________
+
+{{agencia_nombre}}
+{{agencia_domicilio}}
+CUIT: {{agencia_cuit}}
+
+RECIBO de {{cliente_nombre}}, DNI {{cliente_dni|_________}}, la suma de:
+
+    \${{operacion_sena|_________}} ({{operacion_moneda}})
+
+En concepto de SEÑA por el siguiente vehículo:
+
+    {{vehiculo_nombre}}
+    Dominio: {{vehiculo_dominio}}
+    Año: {{vehiculo_anio}} | Color: {{vehiculo_color}}
+    Kilometraje: {{vehiculo_km}} km
+
+Precio total pactado: \${{operacion_monto}} ({{operacion_moneda}})
+Saldo restante: a cancelar al momento de la entrega del vehículo.
+
+La presente seña tiene carácter de reserva. En caso de arrepentimiento del comprador, la seña quedará en poder del vendedor. En caso de arrepentimiento del vendedor, deberá devolver el doble de la seña recibida, conforme art. 1059 del Código Civil y Comercial.
+
+Forma de pago de la seña: {{operacion_metodo_pago|Efectivo}}
+
+
+_________________________          _________________________
+       VENDEDOR                           COMPRADOR
+   {{agencia_nombre}}               {{cliente_nombre}}`,
+        },
+      }),
+      prisma.documentTemplate.create({
+        data: {
+          name: "Contrato de Consignación",
+          type: "CONSIGNACION",
+          isDefault: true,
+          content: `CONTRATO DE CONSIGNACIÓN DE AUTOMOTOR
+
+En la ciudad de {{agencia_domicilio|_________}}, a los {{fecha_larga}}, entre:
+
+CONSIGNATARIO: {{agencia_nombre}}
+CUIT: {{agencia_cuit}}
+Domicilio: {{agencia_domicilio}}
+
+CONSIGNANTE: {{cliente_nombre}}
+DNI/CUIT: {{cliente_dni|_________}}
+Domicilio: {{cliente_domicilio}}
+Teléfono: {{cliente_telefono}}
+
+Se celebra el presente contrato de CONSIGNACIÓN sujeto a las siguientes cláusulas:
+
+PRIMERA — OBJETO: El CONSIGNANTE entrega en consignación al CONSIGNATARIO el siguiente vehículo:
+- Descripción: {{vehiculo_nombre}}
+- Marca: {{vehiculo_marca}} | Modelo: {{vehiculo_modelo}} | Año: {{vehiculo_anio}}
+{{#if vehiculo_version}}- Versión: {{vehiculo_version}}{{/if}}
+- Dominio: {{vehiculo_dominio}}
+{{#if vehiculo_motor}}- Nº Motor: {{vehiculo_motor}}{{/if}}
+{{#if vehiculo_chasis}}- Nº Chasis: {{vehiculo_chasis}}{{/if}}
+- Kilometraje: {{vehiculo_km}} km
+- Color: {{vehiculo_color}}
+- Combustible: {{vehiculo_combustible}}
+
+SEGUNDA — PRECIO: El precio mínimo de venta se fija en \${{operacion_monto}} ({{operacion_moneda}}). El CONSIGNATARIO podrá ofertar por encima de dicho mínimo, correspondiendo la diferencia como comisión.
+
+TERCERA — PLAZO: El presente contrato tendrá una vigencia de 60 (sesenta) días corridos a partir de la fecha de firma, renovable de común acuerdo.
+
+CUARTA — COMISIÓN: La comisión del CONSIGNATARIO será del ___% sobre el precio final de venta, o la diferencia entre el precio mínimo y el precio efectivamente obtenido, lo que resulte mayor.
+
+QUINTA — OBLIGACIONES DEL CONSIGNATARIO:
+a) Exhibir el vehículo en condiciones adecuadas
+b) Gestionar la venta de buena fe
+c) Informar al CONSIGNANTE sobre ofertas recibidas
+d) Liquidar el precio dentro de las 48 hs. hábiles de concretada la venta
+
+SEXTA — OBLIGACIONES DEL CONSIGNANTE:
+a) Entregar el vehículo en condiciones de funcionamiento
+b) Proveer toda la documentación necesaria para la transferencia
+c) No vender ni comprometer el vehículo por su cuenta durante la vigencia del contrato
+
+SÉPTIMA — RESCISIÓN: Cualquiera de las partes podrá rescindir el presente contrato con un preaviso de 5 (cinco) días hábiles.
+
+OCTAVA — JURISDICCIÓN: Para cualquier conflicto derivado del presente, las partes se someten a la jurisdicción ordinaria de la ciudad de {{agencia_domicilio|_________}}.
+
+
+_________________________          _________________________
+     CONSIGNATARIO                      CONSIGNANTE
+   {{agencia_nombre}}               {{cliente_nombre}}`,
+        },
+      }),
+      prisma.documentTemplate.create({
+        data: {
+          name: "Presupuesto de Venta",
+          type: "PRESUPUESTO",
+          isDefault: true,
+          content: `PRESUPUESTO
+
+{{agencia_nombre}}
+{{agencia_domicilio}}
+Tel: {{agencia_telefono}} | Email: {{agencia_email}}
+CUIT: {{agencia_cuit}}
+
+Fecha: {{fecha_larga}}
+Dirigido a: {{cliente_nombre}}
+{{#if cliente_telefono}}Tel: {{cliente_telefono}}{{/if}}
+{{#if cliente_email}}Email: {{cliente_email}}{{/if}}
+
+─────────────────────────────────────────
+
+VEHÍCULO:
+  {{vehiculo_nombre}}
+  Marca: {{vehiculo_marca}}
+  Modelo: {{vehiculo_modelo}}
+  Año: {{vehiculo_anio}}
+{{#if vehiculo_version}}  Versión: {{vehiculo_version}}{{/if}}
+  Dominio: {{vehiculo_dominio}}
+  Kilometraje: {{vehiculo_km}} km
+  Combustible: {{vehiculo_combustible}}
+  Transmisión: {{vehiculo_transmision}}
+  Color: {{vehiculo_color}}
+
+─────────────────────────────────────────
+
+PRECIO: \${{operacion_monto|A convenir}} ({{operacion_moneda|ARS}})
+
+{{#if operacion_metodo_pago}}Forma de pago: {{operacion_metodo_pago}}{{/if}}
+
+─────────────────────────────────────────
+
+CONDICIONES:
+• El presente presupuesto tiene una validez de 5 (cinco) días hábiles.
+• Los precios pueden variar sin previo aviso.
+• No incluye gastos de transferencia ni trámites registrales.
+• El vehículo se entrega en el estado en que se encuentra.
+• Sujeto a disponibilidad al momento de la operación.
+
+Quedamos a disposición para cualquier consulta.
+Atentamente,
+
+{{agencia_nombre}}`,
+        },
+      }),
+      prisma.documentTemplate.create({
+        data: {
+          name: "Recibo de Pago",
+          type: "CONTRATO",
+          isDefault: true,
+          content: `RECIBO DE PAGO
+
+Fecha: {{fecha_larga}}
+Nº: ____________
+
+{{agencia_nombre}}
+CUIT: {{agencia_cuit}}
+{{agencia_domicilio}}
+
+RECIBÍ de {{cliente_nombre}}, DNI {{cliente_dni|_________}}, domiciliado/a en {{cliente_domicilio}}, la suma de:
+
+    \${{operacion_monto}} ({{operacion_moneda}})
+
+En concepto de: {{operacion_tipo|Pago}} — {{vehiculo_nombre}}
+Dominio: {{vehiculo_dominio}}
+
+Forma de pago: {{operacion_metodo_pago|Efectivo}}
+
+El presente recibo se extiende como constancia de pago.
+
+
+_________________________
+{{agencia_nombre}}
+Firma y sello`,
+        },
+      }),
+    ]);
+    console.log("📄 Default document templates created");
+  }
+
   // Create interactions
   await Promise.all([
     prisma.interaction.create({

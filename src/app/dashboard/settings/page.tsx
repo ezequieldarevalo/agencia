@@ -7,10 +7,196 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PROVINCES } from "@/lib/utils";
 import { Select } from "@/components/ui/select";
-import { Save, Globe, MessageCircle, ShoppingBag, Check, Crown, ArrowRight, Clock, Copy } from "lucide-react";
+import { Save, Globe, MessageCircle, ShoppingBag, Check, Crown, ArrowRight, Clock, Copy, Upload, X, Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { PLANS, getPlan, formatPlanPrice, type PlanId } from "@/lib/plans";
+import { OPERATION_STEPS } from "@/lib/operation-steps";
 
 const PAYMENT_ALIAS = "total.abundance.cp";
+
+type StepConfig = Record<string, Record<string, string[]>>;
+
+const OP_TYPE_LABELS: Record<string, { label: string; icon: string }> = {
+  COMPRA: { label: "Compra", icon: "📥" },
+  VENTA: { label: "Venta", icon: "📤" },
+  CONSIGNACION: { label: "Consignación", icon: "🤝" },
+};
+
+function StepConfigSection() {
+  const [config, setConfig] = useState<StepConfig>({});
+  const [expandedType, setExpandedType] = useState<string | null>(null);
+  const [expandedStep, setExpandedStep] = useState<string | null>(null);
+  const [newCheck, setNewCheck] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/dealership/step-config")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && typeof data === "object" && !data.error) setConfig(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  const getChecks = (type: string, stepTitle: string): string[] => {
+    if (config[type]?.[stepTitle]) return config[type][stepTitle];
+    const def = OPERATION_STEPS[type]?.find((s) => s.title === stepTitle);
+    return def?.defaultChecks || [];
+  };
+
+  const updateChecks = (type: string, stepTitle: string, checks: string[]) => {
+    setConfig((prev) => ({
+      ...prev,
+      [type]: { ...prev[type], [stepTitle]: checks },
+    }));
+  };
+
+  const handleAddCheck = (type: string, stepTitle: string) => {
+    const key = `${type}_${stepTitle}`;
+    const label = newCheck[key]?.trim();
+    if (!label) return;
+    const current = getChecks(type, stepTitle);
+    updateChecks(type, stepTitle, [...current, label]);
+    setNewCheck((prev) => ({ ...prev, [key]: "" }));
+  };
+
+  const handleRemoveCheck = (type: string, stepTitle: string, idx: number) => {
+    const current = getChecks(type, stepTitle);
+    updateChecks(type, stepTitle, current.filter((_, i) => i !== idx));
+  };
+
+  const handleResetStep = (type: string, stepTitle: string) => {
+    setConfig((prev) => {
+      const next = { ...prev };
+      if (next[type]) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [stepTitle]: _removed, ...rest } = next[type];
+        next[type] = rest;
+      }
+      return next;
+    });
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await fetch("/api/dealership/step-config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(config),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch { /* ignore */ }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <Card>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-semibold">Checklist de Operaciones</h2>
+          <p className="text-gray-400 text-sm mt-1">Configurá las tareas predeterminadas para cada paso de cada tipo de operación</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {saved && <span className="text-green-400 text-xs">¡Guardado!</span>}
+          <Button size="sm" onClick={handleSave} disabled={saving}>
+            <Save size={14} className="mr-1" />
+            {saving ? "Guardando..." : "Guardar"}
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        {Object.entries(OPERATION_STEPS).map(([type, steps]) => {
+          const typeInfo = OP_TYPE_LABELS[type];
+          const isTypeExpanded = expandedType === type;
+          return (
+            <div key={type} className="border border-gray-700 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setExpandedType(isTypeExpanded ? null : type)}
+                className="w-full flex items-center gap-2 px-4 py-3 bg-gray-800/50 hover:bg-gray-800 transition-colors text-left"
+              >
+                {isTypeExpanded ? <ChevronDown size={14} className="text-gray-500" /> : <ChevronRight size={14} className="text-gray-500" />}
+                <span className="text-lg">{typeInfo?.icon}</span>
+                <span className="text-sm font-medium">{typeInfo?.label || type}</span>
+                <span className="text-xs text-gray-500 ml-auto">{steps.length} pasos</span>
+              </button>
+
+              {isTypeExpanded && (
+                <div className="px-4 pb-3 space-y-1">
+                  {steps.map((stepDef) => {
+                    const stepKey = `${type}_${stepDef.title}`;
+                    const isStepExpanded = expandedStep === stepKey;
+                    const checks = getChecks(type, stepDef.title);
+                    const isCustomized = !!config[type]?.[stepDef.title];
+
+                    return (
+                      <div key={stepDef.title} className="border border-gray-700/50 rounded-lg">
+                        <button
+                          onClick={() => setExpandedStep(isStepExpanded ? null : stepKey)}
+                          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-800/30 transition-colors text-left"
+                        >
+                          {isStepExpanded ? <ChevronDown size={12} className="text-gray-500" /> : <ChevronRight size={12} className="text-gray-500" />}
+                          <span className="text-sm text-gray-300">{stepDef.title}</span>
+                          {stepDef.optional && <span className="text-[10px] px-1.5 py-0.5 bg-gray-700 text-gray-500 rounded">Opcional</span>}
+                          {isCustomized && <span className="text-[10px] px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded">Personalizado</span>}
+                          <span className="text-xs text-gray-600 ml-auto">{checks.length} tareas</span>
+                        </button>
+
+                        {isStepExpanded && (
+                          <div className="px-3 pb-3 space-y-2">
+                            {checks.map((label, idx) => (
+                              <div key={idx} className="flex items-center gap-2 group">
+                                <span className="text-xs text-gray-500 w-5 text-right">{idx + 1}.</span>
+                                <span className="text-sm text-gray-300 flex-1">{label}</span>
+                                <button
+                                  onClick={() => handleRemoveCheck(type, stepDef.title, idx)}
+                                  className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 transition-all"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            ))}
+                            <div className="flex gap-2 mt-1">
+                              <input
+                                type="text"
+                                value={newCheck[stepKey] || ""}
+                                onChange={(e) => setNewCheck((prev) => ({ ...prev, [stepKey]: e.target.value }))}
+                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddCheck(type, stepDef.title); } }}
+                                placeholder="Agregar tarea..."
+                                className="flex-1 px-2.5 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+                              <button
+                                onClick={() => handleAddCheck(type, stepDef.title)}
+                                disabled={!newCheck[stepKey]?.trim()}
+                                className="px-2 py-1.5 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 disabled:opacity-40 transition-colors"
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </div>
+                            {isCustomized && (
+                              <button
+                                onClick={() => handleResetStep(type, stepDef.title)}
+                                className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                              >
+                                Restaurar tareas predeterminadas
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
 
 function PlanSection({ dealership }: { dealership: Dealership | null }) {
   const [selectedPlan, setSelectedPlan] = useState<PlanId | null>(null);
@@ -226,6 +412,7 @@ export default function SettingsPage() {
     city: "",
     street: "",
     streetNumber: "",
+    logoUrl: "",
     schedule: "",
     videoUrl: "",
     description: "",
@@ -251,6 +438,7 @@ export default function SettingsPage() {
             city: data.city || "",
             street: data.street || "",
             streetNumber: data.streetNumber || "",
+            logoUrl: data.logoUrl || "",
             schedule: data.schedule || "",
             videoUrl: data.videoUrl || "",
             description: data.description || "",
@@ -361,9 +549,28 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Logo de la Agencia</label>
-              <div className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center text-gray-500">
-                <p className="text-sm">Arrastrá tu logo aquí</p>
-              </div>
+              {form.logoUrl ? (
+                <div className="relative inline-block">
+                  <img src={form.logoUrl} alt="Logo" className="h-24 w-auto rounded-lg border border-gray-700 bg-white p-2" />
+                  <button type="button" onClick={() => setForm(f => ({ ...f, logoUrl: "" }))} className="absolute -top-2 -right-2 bg-red-600 rounded-full p-1 text-white hover:bg-red-500 transition-colors">
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <label className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center text-gray-500 cursor-pointer hover:border-gray-500 transition-colors block">
+                  <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 2 * 1024 * 1024) { alert("El archivo es demasiado grande. Máximo 2MB."); return; }
+                    const reader = new FileReader();
+                    reader.onload = () => setForm(f => ({ ...f, logoUrl: reader.result as string }));
+                    reader.readAsDataURL(file);
+                  }} className="hidden" />
+                  <Upload className="w-6 h-6 mx-auto mb-2" />
+                  <p className="text-sm">Arrastrá tu logo aquí o hacé click para subir</p>
+                  <p className="text-xs mt-1 text-gray-600">PNG, JPG o SVG. Máximo 2MB.</p>
+                </label>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Horario de Atención</label>
@@ -392,6 +599,9 @@ export default function SettingsPage() {
             </div>
           </div>
         </Card>
+
+        {/* Step Config */}
+        <StepConfigSection />
 
         {/* Advanced - Contracts */}
         <Card>

@@ -69,6 +69,7 @@ model Client {
   interactions    Interaction[]
   waMessages      WaMessage[]
   calendarEvents  CalendarEvent[]
+  operations      Operation[]
 }
 
 model Supplier {
@@ -92,6 +93,7 @@ model Supplier {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   vehicles        Vehicle[] @relation("SupplierVehicles")
+  operations      Operation[]
 }
 
 model Vehicle {
@@ -135,6 +137,7 @@ model Vehicle {
   waMessages      WaMessage[]
   mlListings      MlListing[]
   calendarEvents  CalendarEvent[]
+  operations      Operation[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 }
@@ -176,6 +179,8 @@ model CashMovement {
   cashAccount   CashAccount  @relation(fields: [cashAccountId], references: [id])
   vehicleId     String?
   vehicle       Vehicle?     @relation(fields: [vehicleId], references: [id])
+  operationId   String?
+  operation     Operation?   @relation(fields: [operationId], references: [id])
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }
@@ -281,6 +286,8 @@ model Dealership {
   mlNickname         String?
   mlConnectedAt      DateTime?
   mlTokenExpiresAt   DateTime?
+  // Custom step checklist configuration (JSON: { COMPRA: { "Pago": ["check1", ...], ... }, VENTA: {...}, CONSIGNACION: {...} })
+  stepConfig         Json?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -413,6 +420,69 @@ model PlanChangeRequest {
   notes         String?
   reviewedBy    String?  // Admin who reviewed
   reviewedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Operations: process-driven dealership operations (COMPRA, VENTA, CONSIGNACION)
+model Operation {
+  id            String          @id @default(cuid())
+  type          String          // COMPRA, VENTA, CONSIGNACION
+  status        String          @default("EN_CURSO") // EN_CURSO, COMPLETADA, CANCELADA, BLOQUEADA
+  vehicleId     String?
+  vehicle       Vehicle?        @relation(fields: [vehicleId], references: [id])
+  clientId      String?
+  client        Client?         @relation(fields: [clientId], references: [id])
+  supplierId    String?
+  supplier      Supplier?       @relation(fields: [supplierId], references: [id])
+  totalAmount   Float?
+  paidAmount    Float           @default(0)
+  currency      String          @default("ARS")
+  notes         String?
+  // Contextual flags that drive conditional steps
+  includesTransfer Boolean      @default(false)
+  hasDeposit       Boolean      @default(false)
+  depositAmount    Float?
+  isFinanced       Boolean      @default(false)
+  paymentMethod    String?      // CONTADO, FINANCIADO, PERMUTA, TRANSFERENCIA
+  steps         OperationStep[]
+  payments      CashMovement[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model OperationStep {
+  id            String    @id @default(cuid())
+  operationId   String
+  operation     Operation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  order         Int
+  status        String    @default("PENDIENTE") // PENDIENTE, EN_CURSO, COMPLETADO, OMITIDO
+  optional      Boolean   @default(false)
+  category      String    @default("CORE") // CORE, FINANCIERO, DOCUMENTAL, LOGISTICO
+  condition     String?   // condition key: "includesTransfer", "hasDeposit", "isFinanced"
+  completedAt   DateTime?
+  checkItems    StepCheckItem[]
+  createdAt     DateTime  @default(now())
+}
+
+model StepCheckItem {
+  id        String        @id @default(cuid())
+  stepId    String
+  step      OperationStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  label     String
+  checked   Boolean       @default(false)
+  order     Int           @default(0)
+}
+
+// Document templates with variable substitution
+model DocumentTemplate {
+  id            String   @id @default(cuid())
+  name          String
+  type          String   // BOLETO, PRESUPUESTO, CONTRATO, RECIBO_SENA, CONSIGNACION, CUSTOM
+  content       String   // Template body with {{variable}} placeholders
+  isDefault     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

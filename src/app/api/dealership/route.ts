@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const dealerships = await prisma.dealership.findMany({ take: 1 });
   if (dealerships.length === 0) {
@@ -29,6 +31,7 @@ export async function PUT(req: Request) {
         city: body.city || null,
         street: body.street || null,
         streetNumber: body.streetNumber || null,
+        logoUrl: body.logoUrl || null,
         schedule: body.schedule || null,
         videoUrl: body.videoUrl || null,
         description: body.description || null,
@@ -49,6 +52,7 @@ export async function PUT(req: Request) {
         city: body.city || null,
         street: body.street || null,
         streetNumber: body.streetNumber || null,
+        logoUrl: body.logoUrl || null,
         schedule: body.schedule || null,
         videoUrl: body.videoUrl || null,
         description: body.description || null,

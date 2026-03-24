@@ -141,30 +141,99 @@ async function getValidToken() {
   return d.mlAccessToken!;
 }
 
+// Build an optimized title for ML search algorithm
+// ML favors: Brand Model Version Year - Key specs (max 60 chars)
+function buildOptimizedTitle(vehicle: {
+  brand?: string | null;
+  model?: string | null;
+  version?: string | null;
+  year?: number | null;
+  kilometers?: number | null;
+  fuel?: string | null;
+}) {
+  const parts: string[] = [];
+  if (vehicle.brand) parts.push(vehicle.brand);
+  if (vehicle.model) parts.push(vehicle.model);
+  if (vehicle.version) parts.push(vehicle.version);
+  if (vehicle.year) parts.push(String(vehicle.year));
+
+  // Add km range as a search-friendly suffix (e.g., "50mil Km")
+  if (vehicle.kilometers) {
+    const kmK = Math.round(vehicle.kilometers / 1000);
+    if (kmK > 0) parts.push(`${kmK}mil Km`);
+  }
+
+  let title = parts.join(" ");
+
+  // If still room, add fuel type (common ML search filter term)
+  if (vehicle.fuel && title.length + vehicle.fuel.length + 3 <= 60) {
+    const fuelShort: Record<string, string> = {
+      NAFTA: "Nafta", DIESEL: "Diesel", GNC: "GNC",
+      ELECTRICO: "Eléctrico", HIBRIDO: "Híbrido",
+    };
+    title += ` ${fuelShort[vehicle.fuel] || vehicle.fuel}`;
+  }
+
+  return title.slice(0, 60);
+}
+
+// Map vehicle category to ML category ID
+function getMlCategoryId(category?: string | null, bodyType?: string | null): string {
+  // MercadoLibre Argentina categories for vehicles
+  const categoryMap: Record<string, string> = {
+    AUTOS_Y_CAMIONETAS: "MLA1744",
+    MOTOS: "MLA1763",
+    CAMIONES: "MLA1743",
+    MAQUINARIA: "MLA407134",
+    NAUTICA: "MLA1748",
+  };
+  if (category && categoryMap[category]) return categoryMap[category];
+
+  // Fallback by body type
+  if (bodyType) {
+    const bodyMap: Record<string, string> = {
+      PICKUP: "MLA1744", CAMIONETA: "MLA1744", SUV: "MLA1744",
+      SEDAN: "MLA1744", HATCHBACK: "MLA1744", COUPE: "MLA1744",
+    };
+    if (bodyMap[bodyType]) return bodyMap[bodyType];
+  }
+
+  return "MLA1744"; // Default: Autos y Camionetas
+}
+
+// Determine if vehicle is 0km or used
+function getMlCondition(kilometers?: number | null, status?: string | null): string {
+  if (kilometers === 0 || status === "0KM") return "new";
+  return "used";
+}
+
 // Publish a vehicle to MercadoLibre
-export async function publishListing(vehicleId: string, overrides?: { title?: string; price?: number; listingType?: string }) {
+export async function publishListing(vehicleId: string, overrides?: { title?: string; price?: number; listingType?: string; currency?: string }) {
   const token = await getValidToken();
   const d = await getDealership();
   const vehicle = await prisma.vehicle.findUnique({
     where: { id: vehicleId },
-    include: { photos: { orderBy: { order: "asc" } } },
+    include: { photos: { orderBy: { order: "asc" }, take: 12 } },
   });
   if (!vehicle) throw new Error("Vehículo no encontrado");
 
-  const title = overrides?.title || `${vehicle.brand} ${vehicle.model} ${vehicle.version || ""} ${vehicle.year || ""}`.trim();
-  const price = overrides?.price || vehicle.priceARS || 0;
+  const title = overrides?.title || buildOptimizedTitle(vehicle);
+  const currencyId = overrides?.currency || (vehicle.currency === "USD" ? "USD" : "ARS");
+  const price = overrides?.price || (currencyId === "USD" ? vehicle.priceUSD : vehicle.priceARS) || 0;
   const listingType = overrides?.listingType || "gold_special";
+  const categoryId = getMlCategoryId(vehicle.category, vehicle.bodyType);
+  const condition = getMlCondition(vehicle.kilometers, vehicle.status);
 
-  const itemData = {
-    title: title.slice(0, 60), // ML max 60 chars
-    category_id: "MLA1744", // Autos y Camionetas
+  const itemData: Record<string, unknown> = {
+    title,
+    category_id: categoryId,
     price,
-    currency_id: "ARS",
+    currency_id: currencyId,
     available_quantity: 1,
     buying_mode: "classified",
     listing_type_id: listingType,
-    condition: "used",
-    description: { plain_text: buildMlDescription(vehicle) },
+    condition,
+    description: { plain_text: buildMlDescription(vehicle, d) },
     pictures: vehicle.photos.map((p) => ({ source: p.url })),
     location: {
       city: { name: vehicle.locationCity || d.city || "" },
@@ -172,6 +241,13 @@ export async function publishListing(vehicleId: string, overrides?: { title?: st
     },
     attributes: buildMlAttributes(vehicle),
   };
+
+  // Add seller contact for better visibility
+  if (d.phone || vehicle.contactPhone) {
+    itemData.seller_contact = {
+      phone: vehicle.contactPhone || d.phone || "",
+    };
+  }
 
   let mlItemId: string | null = null;
   let permalink: string | null = null;
@@ -203,8 +279,8 @@ export async function publishListing(vehicleId: string, overrides?: { title?: st
       status,
       title,
       price,
-      currency: "ARS",
-      categoryId: "MLA1744",
+      currency: currencyId,
+      categoryId,
       listingType,
       permalink,
       publishedAt: status === "ACTIVE" ? new Date() : null,
@@ -383,9 +459,13 @@ export async function getAllQuestions() {
   });
 }
 
-// Helper: build MercadoLibre description
+// Helper: build MercadoLibre description optimized for search & conversions
+// ML algorithm favors: structured info, complete specs, keywords, clear sections
 function buildMlDescription(vehicle: {
   name: string;
+  brand?: string | null;
+  model?: string | null;
+  version?: string | null;
   year?: number | null;
   kilometers?: number | null;
   fuel?: string | null;
@@ -393,34 +473,99 @@ function buildMlDescription(vehicle: {
   color?: string | null;
   doors?: number | null;
   engine?: string | null;
+  bodyType?: string | null;
   description?: string | null;
   domain?: string | null;
+  locationCity?: string | null;
+  locationProvince?: string | null;
+}, dealership: {
+  name?: string | null;
+  phone?: string | null;
+  city?: string | null;
+  province?: string | null;
+  street?: string | null;
+  streetNumber?: string | null;
+  schedule?: string | null;
 }) {
   const lines: string[] = [];
-  lines.push(vehicle.name);
+
+  // Header with full vehicle name (ML indexes this heavily)
+  lines.push(`═══════════════════════════════════`);
+  lines.push(vehicle.name.toUpperCase());
+  lines.push(`═══════════════════════════════════`);
   lines.push("");
-  if (vehicle.year) lines.push(`Año: ${vehicle.year}`);
-  if (vehicle.kilometers) lines.push(`Kilómetros: ${vehicle.kilometers.toLocaleString("es-AR")}`);
-  if (vehicle.fuel) lines.push(`Combustible: ${vehicle.fuel}`);
-  if (vehicle.transmission) lines.push(`Transmisión: ${vehicle.transmission}`);
-  if (vehicle.color) lines.push(`Color: ${vehicle.color}`);
-  if (vehicle.doors) lines.push(`Puertas: ${vehicle.doors}`);
-  if (vehicle.engine) lines.push(`Motor: ${vehicle.engine}`);
-  if (vehicle.description) {
-    lines.push("");
-    lines.push(vehicle.description);
+
+  // FICHA TÉCNICA section - structured data ML can parse
+  lines.push("▸ FICHA TÉCNICA");
+  lines.push("─────────────────────────────");
+  if (vehicle.brand) lines.push(`• Marca: ${vehicle.brand}`);
+  if (vehicle.model) lines.push(`• Modelo: ${vehicle.model}`);
+  if (vehicle.version) lines.push(`• Versión: ${vehicle.version}`);
+  if (vehicle.year) lines.push(`• Año: ${vehicle.year}`);
+  if (vehicle.kilometers != null) lines.push(`• Kilómetros: ${vehicle.kilometers.toLocaleString("es-AR")} km`);
+  if (vehicle.fuel) {
+    const fuelMap: Record<string, string> = {
+      NAFTA: "Nafta", DIESEL: "Diésel", GNC: "GNC", ELECTRICO: "Eléctrico", HIBRIDO: "Híbrido",
+    };
+    lines.push(`• Combustible: ${fuelMap[vehicle.fuel] || vehicle.fuel}`);
   }
+  if (vehicle.transmission) {
+    lines.push(`• Transmisión: ${vehicle.transmission === "MANUAL" ? "Manual" : "Automática"}`);
+  }
+  if (vehicle.engine) lines.push(`• Motor: ${vehicle.engine}`);
+  if (vehicle.color) lines.push(`• Color: ${vehicle.color}`);
+  if (vehicle.doors) lines.push(`• Puertas: ${vehicle.doors}`);
+  if (vehicle.bodyType) lines.push(`• Tipo de carrocería: ${vehicle.bodyType}`);
   lines.push("");
-  lines.push("Financiación disponible. Aceptamos vehículo como parte de pago.");
-  lines.push("Visítenos en nuestra agencia.");
+
+  // Custom description from the user
+  if (vehicle.description) {
+    lines.push("▸ DESCRIPCIÓN");
+    lines.push("─────────────────────────────");
+    lines.push(vehicle.description);
+    lines.push("");
+  }
+
+  // SERVICIOS section - ML rewards complete listings
+  lines.push("▸ BENEFICIOS DE COMPRAR CON NOSOTROS");
+  lines.push("─────────────────────────────");
+  lines.push("✔ Financiación disponible");
+  lines.push("✔ Aceptamos tu vehículo como parte de pago");
+  lines.push("✔ Garantía mecánica");
+  lines.push("✔ Gestión de transferencia incluida");
+  lines.push("✔ Verificación técnica aprobada");
+  lines.push("");
+
+  // UBICACIÓN - ML uses location for local search ranking
+  const locationParts: string[] = [];
+  if (dealership.street && dealership.streetNumber) locationParts.push(`${dealership.street} ${dealership.streetNumber}`);
+  const city = vehicle.locationCity || dealership.city;
+  const province = vehicle.locationProvince || dealership.province;
+  if (city) locationParts.push(city);
+  if (province) locationParts.push(province);
+
+  if (locationParts.length > 0 || dealership.phone || dealership.schedule) {
+    lines.push("▸ UBICACIÓN Y CONTACTO");
+    lines.push("─────────────────────────────");
+    if (dealership.name) lines.push(`${dealership.name}`);
+    if (locationParts.length > 0) lines.push(`📍 ${locationParts.join(", ")}`);
+    if (dealership.phone) lines.push(`📞 ${dealership.phone}`);
+    if (dealership.schedule) lines.push(`🕐 ${dealership.schedule}`);
+    lines.push("");
+  }
+
+  lines.push("─────────────────────────────");
+  lines.push("¡Consultá sin compromiso!");
   return lines.join("\n");
 }
 
-// Helper: build ML attributes
+// Helper: build ML attributes - Complete attributes improve search visibility
+// ML uses these for filters, search ranking, and item quality score
 function buildMlAttributes(vehicle: {
   brand?: string | null;
   model?: string | null;
   year?: number | null;
+  version?: string | null;
   kilometers?: number | null;
   fuel?: string | null;
   transmission?: string | null;
@@ -430,20 +575,45 @@ function buildMlAttributes(vehicle: {
   bodyType?: string | null;
 }) {
   const attrs: { id: string; value_name: string }[] = [];
+
+  // Required/high-impact attributes for ML ranking
   if (vehicle.brand) attrs.push({ id: "BRAND", value_name: vehicle.brand });
   if (vehicle.model) attrs.push({ id: "MODEL", value_name: vehicle.model });
   if (vehicle.year) attrs.push({ id: "VEHICLE_YEAR", value_name: String(vehicle.year) });
-  if (vehicle.kilometers) attrs.push({ id: "KILOMETERS", value_name: String(vehicle.kilometers) });
+  if (vehicle.version) attrs.push({ id: "TRIM", value_name: vehicle.version });
+  if (vehicle.kilometers != null) attrs.push({ id: "KILOMETERS", value_name: String(vehicle.kilometers) });
+
   if (vehicle.fuel) {
     const fuelMap: Record<string, string> = {
       NAFTA: "Nafta", DIESEL: "Diésel", GNC: "GNC", ELECTRICO: "Eléctrico", HIBRIDO: "Híbrido",
     };
     attrs.push({ id: "FUEL_TYPE", value_name: fuelMap[vehicle.fuel] || vehicle.fuel });
   }
+
   if (vehicle.transmission) {
     attrs.push({ id: "TRANSMISSION", value_name: vehicle.transmission === "MANUAL" ? "Manual" : "Automática" });
   }
+
   if (vehicle.color) attrs.push({ id: "COLOR", value_name: vehicle.color });
   if (vehicle.doors) attrs.push({ id: "DOORS", value_name: String(vehicle.doors) });
+
+  // Body type - important filter in ML
+  if (vehicle.bodyType) {
+    const bodyMap: Record<string, string> = {
+      SEDAN: "Sedán", HATCHBACK: "Hatchback", SUV: "SUV",
+      PICKUP: "Pick-Up", COUPE: "Coupé", CAMIONETA: "Camioneta",
+      MINIVAN: "Minivan", CONVERTIBLE: "Convertible", FURGON: "Furgón",
+    };
+    attrs.push({ id: "VEHICLE_BODY_TYPE", value_name: bodyMap[vehicle.bodyType] || vehicle.bodyType });
+  }
+
+  // Engine displacement (e.g. "1.6", "2.0 TSI")
+  if (vehicle.engine) {
+    attrs.push({ id: "ENGINE_DISPLACEMENT", value_name: vehicle.engine });
+  }
+
+  // ML flags that improve quality score and appear in filters
+  attrs.push({ id: "ITEM_CONDITION", value_name: vehicle.kilometers === 0 ? "Nuevo" : "Usado" });
+
   return attrs;
 }

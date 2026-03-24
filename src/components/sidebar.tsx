@@ -19,8 +19,10 @@ import {
   CalendarDays,
   BarChart3,
   Kanban,
+  FileText,
   X,
   Shield,
+  ClipboardList,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { usePlan } from "@/components/plan-provider";
@@ -35,6 +37,8 @@ const navItems = [
   { href: "/dashboard/debts", icon: CreditCard, label: "Deudas" },
   { href: "/dashboard/leads", icon: MessageSquare, label: "Leads" },
   { href: "/dashboard/pipeline", icon: Kanban, label: "Pipeline" },
+  { href: "/dashboard/operations", icon: ClipboardList, label: "Operaciones" },
+  { href: "/dashboard/documents", icon: FileText, label: "Documentos" },
   { href: "/dashboard/calendar", icon: CalendarDays, label: "Agenda" },
   { href: "/dashboard/reports", icon: BarChart3, label: "Reportes" },
   { href: "/dashboard/integrations", icon: Plug, label: "Integraciones" },
