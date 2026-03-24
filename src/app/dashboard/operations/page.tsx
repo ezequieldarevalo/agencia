@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,8 @@ import {
   MapPin,
   CreditCard,
   Camera,
+  ScanLine,
+  Save,
   FileSignature,
   Package,
   Edit3,
@@ -85,6 +87,8 @@ interface Vehicle {
   fuel?: string;
   color?: string;
   transmission?: string;
+  chassisNumber?: string;
+  engineNumber?: string;
   photos?: { url: string }[];
 }
 
@@ -283,6 +287,18 @@ export default function OperationsPage() {
   const [expenseForm, setExpenseForm] = useState({ concept: "", amount: "", currency: "ARS", cashAccountId: "", category: "" });
   const [loadingChecks, setLoadingChecks] = useState<Set<string>>(new Set());
   const [showExpenseDetail, setShowExpenseDetail] = useState(false);
+
+  // ── OCR + inline editing state ──
+  const [scanning, setScanning] = useState(false);
+  const [scanType, setScanType] = useState<"dni" | "cedula" | null>(null);
+  const dniInputRef = useRef<HTMLInputElement>(null);
+  const cedulaInputRef = useRef<HTMLInputElement>(null);
+  const [editingVehicle, setEditingVehicle] = useState(false);
+  const [vehicleForm, setVehicleForm] = useState<Record<string, string>>({});
+  const [savingVehicle, setSavingVehicle] = useState(false);
+  const [editingPerson, setEditingPerson] = useState(false);
+  const [personForm, setPersonForm] = useState<Record<string, string>>({});
+  const [savingPerson, setSavingPerson] = useState(false);
 
   // Auto-expand next pending step when entering detail view
   useEffect(() => {
@@ -615,6 +631,162 @@ export default function OperationsPage() {
     setEditingAmount(false);
   };
 
+  /** OCR: scan DNI image and update person */
+  const handleScanDni = async (file: File, personId: string, personType: "client" | "supplier") => {
+    setScanning(true);
+    setScanType("dni");
+    try {
+      const { scanDni } = await import("@/lib/ocr");
+      const data = await scanDni(file);
+      if (!data.dni && !data.firstName && !data.lastName) {
+        setFeedback({ type: "error", message: "No se pudieron extraer datos del DNI. Ingresalos manualmente." });
+        return;
+      }
+      const updates: Record<string, string | undefined> = {};
+      if (data.firstName) updates.firstName = data.firstName;
+      if (data.lastName) updates.lastName = data.lastName;
+      if (data.dni) updates.dni = data.dni;
+      if (data.sex) updates.sex = data.sex;
+
+      const endpoint = personType === "client" ? `/api/clients/${personId}` : `/api/suppliers/${personId}`;
+      const res = await fetch(endpoint, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updates) });
+      if (!res.ok) throw new Error();
+      if (selectedOp) await refreshOp(selectedOp.id);
+      setFeedback({ type: "success", message: "Datos del DNI extraídos y guardados" });
+    } catch {
+      setFeedback({ type: "error", message: "Error al escanear DNI" });
+    } finally {
+      setScanning(false);
+      setScanType(null);
+    }
+  };
+
+  /** OCR: scan Cédula Verde and update vehicle */
+  const handleScanCedula = async (file: File, vehicleId: string) => {
+    setScanning(true);
+    setScanType("cedula");
+    try {
+      const { scanCedula } = await import("@/lib/ocr");
+      const data = await scanCedula(file);
+      if (!data.brand && !data.model && !data.domain) {
+        setFeedback({ type: "error", message: "No se pudieron extraer datos de la cédula. Ingresalos manualmente." });
+        return;
+      }
+      const updates: Record<string, unknown> = {};
+      if (data.brand) updates.brand = data.brand;
+      if (data.model) updates.model = data.model;
+      if (data.year) updates.year = parseInt(data.year);
+      if (data.domain) updates.domain = data.domain;
+      if (data.chassisNumber) updates.chassisNumber = data.chassisNumber;
+      if (data.engineNumber) updates.engineNumber = data.engineNumber;
+      if (data.brand && data.model) updates.name = `${data.brand} ${data.model}${data.year ? ` ${data.year}` : ""}`;
+
+      const res = await fetch(`/api/vehicles/${vehicleId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updates) });
+      if (!res.ok) throw new Error();
+      if (selectedOp) await refreshOp(selectedOp.id);
+      const vRes = await fetch("/api/vehicles");
+      const vData = await vRes.json();
+      setVehicles(vData.vehicles || vData);
+      setFeedback({ type: "success", message: "Datos de la cédula extraídos y guardados" });
+    } catch {
+      setFeedback({ type: "error", message: "Error al escanear cédula" });
+    } finally {
+      setScanning(false);
+      setScanType(null);
+    }
+  };
+
+  /** Inline vehicle editing: save partial vehicle data */
+  const handleSaveVehicleInline = async (vehicleId: string) => {
+    setSavingVehicle(true);
+    try {
+      const updates: Record<string, unknown> = {};
+      if (vehicleForm.brand !== undefined) updates.brand = vehicleForm.brand || null;
+      if (vehicleForm.model !== undefined) updates.model = vehicleForm.model || null;
+      if (vehicleForm.year !== undefined) updates.year = vehicleForm.year ? parseInt(vehicleForm.year) : null;
+      if (vehicleForm.domain !== undefined) updates.domain = vehicleForm.domain || null;
+      if (vehicleForm.kilometers !== undefined) updates.kilometers = vehicleForm.kilometers ? parseInt(vehicleForm.kilometers) : null;
+      if (vehicleForm.chassisNumber !== undefined) updates.chassisNumber = vehicleForm.chassisNumber || null;
+      if (vehicleForm.engineNumber !== undefined) updates.engineNumber = vehicleForm.engineNumber || null;
+      if (vehicleForm.fuel !== undefined) updates.fuel = vehicleForm.fuel || null;
+      if (vehicleForm.color !== undefined) updates.color = vehicleForm.color || null;
+      if (vehicleForm.transmission !== undefined) updates.transmission = vehicleForm.transmission || null;
+      // Auto-generate name from brand + model + year
+      const brand = vehicleForm.brand ?? "";
+      const model = vehicleForm.model ?? "";
+      const year = vehicleForm.year ?? "";
+      if (brand || model) updates.name = `${brand} ${model}${year ? ` ${year}` : ""}`.trim();
+
+      const res = await fetch(`/api/vehicles/${vehicleId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updates) });
+      if (!res.ok) throw new Error();
+      if (selectedOp) await refreshOp(selectedOp.id);
+      const vRes = await fetch("/api/vehicles");
+      const vData = await vRes.json();
+      setVehicles(vData.vehicles || vData);
+      setEditingVehicle(false);
+      setFeedback({ type: "success", message: "Vehículo actualizado" });
+    } catch {
+      setFeedback({ type: "error", message: "No se pudo actualizar el vehículo" });
+    } finally {
+      setSavingVehicle(false);
+    }
+  };
+
+  /** Inline person editing: save partial person data */
+  const handleSavePersonInline = async (personId: string, personType: "client" | "supplier") => {
+    setSavingPerson(true);
+    try {
+      const endpoint = personType === "client" ? `/api/clients/${personId}` : `/api/suppliers/${personId}`;
+      const res = await fetch(endpoint, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(personForm) });
+      if (!res.ok) throw new Error();
+      if (selectedOp) await refreshOp(selectedOp.id);
+      // Refresh lists
+      const [cRes, sRes] = await Promise.all([fetch("/api/clients").then((r) => r.json()), fetch("/api/suppliers").then((r) => r.json())]);
+      setClients(cRes.clients || cRes);
+      setSuppliers(sRes.suppliers || sRes);
+      setEditingPerson(false);
+      setFeedback({ type: "success", message: "Persona actualizada" });
+    } catch {
+      setFeedback({ type: "error", message: "No se pudo actualizar la persona" });
+    } finally {
+      setSavingPerson(false);
+    }
+  };
+
+  /** Start editing vehicle inline, pre-fill form */
+  const startEditingVehicle = (v: Vehicle) => {
+    setVehicleForm({
+      brand: v.brand || "",
+      model: v.model || "",
+      year: v.year?.toString() || "",
+      domain: v.domain || "",
+      kilometers: v.kilometers?.toString() || "",
+      chassisNumber: v.chassisNumber || "",
+      engineNumber: v.engineNumber || "",
+      fuel: v.fuel || "",
+      color: v.color || "",
+      transmission: v.transmission || "",
+    });
+    setEditingVehicle(true);
+  };
+
+  /** Start editing person inline, pre-fill form */
+  const startEditingPerson = (p: Person) => {
+    setPersonForm({
+      firstName: p.firstName || "",
+      lastName: p.lastName || "",
+      dni: p.dni || "",
+      cuit: p.cuit || "",
+      phone: p.phone || "",
+      email: p.email || "",
+      province: p.province || "",
+      city: p.city || "",
+      street: p.street || "",
+      streetNumber: p.streetNumber || "",
+    });
+    setEditingPerson(true);
+  };
+
   /** Inline expense/payment form component */
   const renderInlineExpenseForm = (opId: string, type: "EGRESO" | "INGRESO", vehicleId?: string, defaultConcept?: string, isPayment?: boolean) => {
     if (!showExpenseForm) {
@@ -726,7 +898,12 @@ export default function OperationsPage() {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-sm truncate">{v.name}</h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-sm truncate">{v.name}</h4>
+                    {!editingVehicle && (
+                      <button onClick={() => startEditingVehicle(v)} className="text-gray-500 hover:text-blue-400 transition-colors p-1"><Edit3 size={12} /></button>
+                    )}
+                  </div>
                   {v.domain && <p className="text-xs text-blue-400 font-mono">{v.domain}</p>}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 mt-2">
                     {v.year && <div className="flex items-center gap-1.5 text-xs"><Calendar size={11} className="text-gray-500" /><span className="text-gray-400">{v.year}</span></div>}
@@ -752,6 +929,64 @@ export default function OperationsPage() {
               <div className="mt-3 max-w-xs mx-auto">
                 <Select label="" value="" onChange={(e) => handleUpdateOp(op.id, { vehicleId: e.target.value })} options={[{ value: "", label: "Seleccionar vehículo..." }, ...vehicles.map((vh) => ({ value: vh.id, label: vh.name }))]} />
               </div>
+            </div>
+          )}
+
+          {/* Inline vehicle editing form */}
+          {v && editingVehicle && (
+            <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-semibold text-blue-400 uppercase tracking-wide">Editar datos del vehículo</h4>
+                <button onClick={() => setEditingVehicle(false)} className="text-gray-500 hover:text-gray-300"><X size={14} /></button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input value={vehicleForm.brand || ""} onChange={(e) => setVehicleForm((f) => ({ ...f, brand: e.target.value }))} placeholder="Marca" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input value={vehicleForm.model || ""} onChange={(e) => setVehicleForm((f) => ({ ...f, model: e.target.value }))} placeholder="Modelo" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input value={vehicleForm.year || ""} onChange={(e) => setVehicleForm((f) => ({ ...f, year: e.target.value }))} placeholder="Año" type="number" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input value={vehicleForm.domain || ""} onChange={(e) => setVehicleForm((f) => ({ ...f, domain: e.target.value }))} placeholder="Dominio/Patente" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input value={vehicleForm.kilometers || ""} onChange={(e) => setVehicleForm((f) => ({ ...f, kilometers: e.target.value }))} placeholder="Kilómetros" type="number" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input value={vehicleForm.chassisNumber || ""} onChange={(e) => setVehicleForm((f) => ({ ...f, chassisNumber: e.target.value }))} placeholder="Nº Chasis" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input value={vehicleForm.engineNumber || ""} onChange={(e) => setVehicleForm((f) => ({ ...f, engineNumber: e.target.value }))} placeholder="Nº Motor" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <select value={vehicleForm.fuel || ""} onChange={(e) => setVehicleForm((f) => ({ ...f, fuel: e.target.value }))} className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  <option value="">Combustible</option>
+                  <option value="Nafta">Nafta</option>
+                  <option value="Diesel">Diesel</option>
+                  <option value="GNC">GNC</option>
+                  <option value="Nafta/GNC">Nafta/GNC</option>
+                  <option value="Eléctrico">Eléctrico</option>
+                  <option value="Híbrido">Híbrido</option>
+                </select>
+                <input value={vehicleForm.color || ""} onChange={(e) => setVehicleForm((f) => ({ ...f, color: e.target.value }))} placeholder="Color" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <select value={vehicleForm.transmission || ""} onChange={(e) => setVehicleForm((f) => ({ ...f, transmission: e.target.value }))} className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  <option value="">Transmisión</option>
+                  <option value="Manual">Manual</option>
+                  <option value="Automático">Automático</option>
+                  <option value="CVT">CVT</option>
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={() => handleSaveVehicleInline(v.id)} disabled={savingVehicle}>
+                  {savingVehicle ? <Loader2 size={14} className="mr-1.5 animate-spin" /> : <Save size={14} className="mr-1.5" />}
+                  Guardar
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingVehicle(false)}>Cancelar</Button>
+              </div>
+            </div>
+          )}
+
+          {/* OCR: Scan Cédula Verde */}
+          {v && (
+            <div className="flex gap-2 flex-wrap">
+              <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors text-xs ${scanning && scanType === "cedula" ? "border-blue-500/50 bg-blue-500/10 text-blue-300" : "border-gray-700/50 bg-gray-800/30 text-gray-400 hover:border-blue-500/30 hover:text-blue-400"}`}>
+                {scanning && scanType === "cedula" ? <Loader2 size={14} className="animate-spin" /> : <ScanLine size={14} />}
+                <span>{scanning && scanType === "cedula" ? "Escaneando cédula..." : "Escanear Cédula Verde"}</span>
+                <input ref={cedulaInputRef} type="file" accept="image/*" capture="environment" className="hidden" disabled={scanning} onChange={(e) => { const f = e.target.files?.[0]; if (f && v) handleScanCedula(f, v.id); e.target.value = ""; }} />
+              </label>
+              {!editingVehicle && (
+                <button onClick={() => startEditingVehicle(v)} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-700/50 bg-gray-800/30 text-gray-400 hover:border-blue-500/30 hover:text-blue-400 transition-colors text-xs">
+                  <Edit3 size={14} /> Editar datos manualmente
+                </button>
+              )}
             </div>
           )}
 
@@ -823,6 +1058,39 @@ export default function OperationsPage() {
                 <span className="text-gray-300 font-medium">{v.priceARS ? formatCurrency(v.priceARS, "ARS") : ""}{v.priceARS && v.priceUSD ? " / " : ""}{v.priceUSD ? formatCurrency(v.priceUSD, "USD") : ""}</span>
               </div>
             )}
+
+            {/* Profitability calculator */}
+            {(() => {
+              const purchaseCost = v?.priceARS || 0;
+              const expenses = (op.payments || []).filter((p) => p.type === "EGRESO").reduce((sum, p) => sum + (p.amountARS || 0), 0);
+              const salePrice = op.totalAmount || 0;
+              const totalCost = purchaseCost + expenses;
+              const profit = salePrice - totalCost;
+              const margin = salePrice > 0 ? (profit / salePrice) * 100 : 0;
+              if (purchaseCost > 0 || expenses > 0) {
+                return (
+                  <div className="rounded-lg border border-gray-700/50 bg-gray-900/30 p-3 space-y-2">
+                    <h5 className="text-[10px] text-gray-500 uppercase tracking-wide font-semibold flex items-center gap-1.5"><TrendingUp size={11} /> Rentabilidad proyectada</h5>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      {purchaseCost > 0 && (
+                        <div className="flex justify-between"><span className="text-gray-500">Costo compra</span><span className="text-red-400">-{formatCurrency(purchaseCost, op.currency)}</span></div>
+                      )}
+                      {expenses > 0 && (
+                        <div className="flex justify-between"><span className="text-gray-500">Gastos</span><span className="text-red-400">-{formatCurrency(expenses, op.currency)}</span></div>
+                      )}
+                      <div className="flex justify-between"><span className="text-gray-500">Precio venta</span><span className={salePrice > 0 ? "text-green-400" : "text-gray-600"}>{salePrice > 0 ? formatCurrency(salePrice, op.currency) : "Sin definir"}</span></div>
+                      <div className="flex justify-between col-span-2 pt-1 border-t border-gray-700/30">
+                        <span className="text-gray-400 font-medium">Ganancia</span>
+                        <span className={`font-bold ${profit > 0 ? "text-green-400" : profit < 0 ? "text-red-400" : "text-gray-500"}`}>
+                          {salePrice > 0 ? `${formatCurrency(profit, op.currency)} (${margin.toFixed(1)}%)` : "—"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
 
             {/* Person context */}
             {person ? (
@@ -1063,6 +1331,7 @@ export default function OperationsPage() {
     // ── CIERRE / DOCUMENTACIÓN ──
     if (stepTitle.includes("Cierre") || stepTitle.includes("Documentación") || stepTitle.includes("Liquidación")) {
       const cierreTemplateType = op.type === "CONSIGNACION" ? "CONSIGNACION" : "BOLETO";
+      const personKind: "client" | "supplier" = (op.type === "COMPRA" || (op.type === "COMPRA_VENTA" && isCompraPhase)) ? "supplier" : "client";
       return (
         <div className="mb-4 space-y-3">
           {person ? (
@@ -1072,8 +1341,15 @@ export default function OperationsPage() {
                   <User size={16} className="text-gray-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wide">{personLabel}</p>
-                  <p className="text-sm font-semibold truncate">{person.firstName} {person.lastName}</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-wide">{personLabel}</p>
+                      <p className="text-sm font-semibold truncate">{person.firstName} {person.lastName}</p>
+                    </div>
+                    {!editingPerson && (
+                      <button onClick={() => startEditingPerson(person)} className="text-gray-500 hover:text-blue-400 transition-colors p-1"><Edit3 size={12} /></button>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
@@ -1089,10 +1365,10 @@ export default function OperationsPage() {
           ) : (
             <div className="rounded-lg border-2 border-dashed border-yellow-500/30 bg-yellow-500/5 p-4 text-center">
               <UserCircle size={24} className="text-yellow-400 mx-auto mb-2" />
-              <p className="text-sm font-medium text-yellow-300">Asociá {(op.type === "COMPRA" || (op.type === "COMPRA_VENTA" && isCompraPhase)) ? "un proveedor" : "un comprador"}</p>
+              <p className="text-sm font-medium text-yellow-300">Asociá {personKind === "supplier" ? "un proveedor" : "un comprador"}</p>
               <p className="text-xs text-gray-500 mt-1">Necesitás los datos para generar la documentación.</p>
               <div className="mt-3 max-w-xs mx-auto">
-                {op.type === "COMPRA" || (op.type === "COMPRA_VENTA" && isCompraPhase) ? (
+                {personKind === "supplier" ? (
                   <Select label="" value="" onChange={(e) => handleUpdateOp(op.id, { supplierId: e.target.value })} options={[{ value: "", label: "Seleccionar proveedor..." }, ...suppliers.map((s) => ({ value: s.id, label: `${s.firstName} ${s.lastName}` }))]} />
                 ) : (
                   <Select label="" value="" onChange={(e) => handleUpdateOp(op.id, { clientId: e.target.value })} options={[{ value: "", label: "Seleccionar cliente..." }, ...clients.map((c) => ({ value: c.id, label: `${c.firstName} ${c.lastName}` }))]} />
@@ -1101,12 +1377,57 @@ export default function OperationsPage() {
             </div>
           )}
 
+          {/* Inline person editing form */}
+          {person && editingPerson && (
+            <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-semibold text-blue-400 uppercase tracking-wide">Editar datos de {personLabel}</h4>
+                <button onClick={() => setEditingPerson(false)} className="text-gray-500 hover:text-gray-300"><X size={14} /></button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input value={personForm.firstName || ""} onChange={(e) => setPersonForm((f) => ({ ...f, firstName: e.target.value }))} placeholder="Nombre" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input value={personForm.lastName || ""} onChange={(e) => setPersonForm((f) => ({ ...f, lastName: e.target.value }))} placeholder="Apellido" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input value={personForm.dni || ""} onChange={(e) => setPersonForm((f) => ({ ...f, dni: e.target.value }))} placeholder="DNI" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input value={personForm.cuit || ""} onChange={(e) => setPersonForm((f) => ({ ...f, cuit: e.target.value }))} placeholder="CUIT" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input value={personForm.phone || ""} onChange={(e) => setPersonForm((f) => ({ ...f, phone: e.target.value }))} placeholder="Teléfono" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input value={personForm.email || ""} onChange={(e) => setPersonForm((f) => ({ ...f, email: e.target.value }))} placeholder="Email" type="email" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input value={personForm.province || ""} onChange={(e) => setPersonForm((f) => ({ ...f, province: e.target.value }))} placeholder="Provincia" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input value={personForm.city || ""} onChange={(e) => setPersonForm((f) => ({ ...f, city: e.target.value }))} placeholder="Ciudad" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input value={personForm.street || ""} onChange={(e) => setPersonForm((f) => ({ ...f, street: e.target.value }))} placeholder="Calle" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input value={personForm.streetNumber || ""} onChange={(e) => setPersonForm((f) => ({ ...f, streetNumber: e.target.value }))} placeholder="Número" className="px-3 py-2 bg-gray-900/80 border border-gray-700/50 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={() => handleSavePersonInline(person.id, personKind)} disabled={savingPerson}>
+                  {savingPerson ? <Loader2 size={14} className="mr-1.5 animate-spin" /> : <Save size={14} className="mr-1.5" />}
+                  Guardar
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingPerson(false)}>Cancelar</Button>
+              </div>
+            </div>
+          )}
+
+          {/* OCR: Scan DNI */}
+          {person && (
+            <div className="flex gap-2 flex-wrap">
+              <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors text-xs ${scanning && scanType === "dni" ? "border-blue-500/50 bg-blue-500/10 text-blue-300" : "border-gray-700/50 bg-gray-800/30 text-gray-400 hover:border-blue-500/30 hover:text-blue-400"}`}>
+                {scanning && scanType === "dni" ? <Loader2 size={14} className="animate-spin" /> : <ScanLine size={14} />}
+                <span>{scanning && scanType === "dni" ? "Escaneando DNI..." : "Escanear DNI"}</span>
+                <input ref={dniInputRef} type="file" accept="image/*" capture="environment" className="hidden" disabled={scanning} onChange={(e) => { const f = e.target.files?.[0]; if (f && person) handleScanDni(f, person.id, personKind); e.target.value = ""; }} />
+              </label>
+              {!editingPerson && (
+                <button onClick={() => startEditingPerson(person)} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-700/50 bg-gray-800/30 text-gray-400 hover:border-blue-500/30 hover:text-blue-400 transition-colors text-xs">
+                  <Edit3 size={14} /> Editar datos manualmente
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Financial summary */}
           {op.totalAmount && (
             <div className="rounded-lg border border-gray-700/50 bg-gray-800/30 p-3">
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div><p className="text-[10px] text-gray-500 uppercase">Total</p><p className="text-sm font-bold">{formatCurrency(op.totalAmount, op.currency)}</p></div>
-                <div><p className="text-[10px] text-gray-500 uppercase">{(op.type === "COMPRA" || (op.type === "COMPRA_VENTA" && isCompraPhase)) ? "Pagado" : "Cobrado"}</p><p className="text-sm font-bold text-green-400">{formatCurrency(op.paidAmount || 0, op.currency)}</p></div>
+                <div><p className="text-[10px] text-gray-500 uppercase">{personKind === "supplier" ? "Pagado" : "Cobrado"}</p><p className="text-sm font-bold text-green-400">{formatCurrency(op.paidAmount || 0, op.currency)}</p></div>
                 <div><p className="text-[10px] text-gray-500 uppercase">Restante</p><p className="text-sm font-bold text-yellow-400">{formatCurrency((op.totalAmount || 0) - (op.paidAmount || 0), op.currency)}</p></div>
               </div>
             </div>

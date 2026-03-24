@@ -70,49 +70,31 @@ export async function disconnectMeta() {
 }
 
 // Publish a vehicle to Facebook page
-// Algorithm optimization: Post with photo gets 10x more reach than text-only
 export async function publishToFacebook(vehicleId: string, message?: string) {
   const d = await getDealership();
   const vehicle = await prisma.vehicle.findUnique({
     where: { id: vehicleId },
-    include: { photos: { orderBy: { order: "asc" }, take: 10 } },
+    include: { photos: { orderBy: { order: "asc" } } },
   });
   if (!vehicle) throw new Error("Vehículo no encontrado");
 
   const postMessage =
     message ||
-    buildFacebookMessage(vehicle, d);
+    buildVehicleMessage(vehicle);
 
   let postId: string | null = null;
   try {
-    if (vehicle.photos.length > 0) {
-      // Strategy: Upload photo + message for maximum engagement
-      // Facebook algorithm heavily favors native photo posts over text-only
-      const photoUrl = vehicle.photos[0].url;
-      const res = await metaFetch(`${META_API_BASE}/${d.metaPageId}/photos`, {
-        method: "POST",
-        body: JSON.stringify({
-          url: photoUrl,
-          message: postMessage,
-          access_token: d.metaAccessToken,
-        }),
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error.message);
-      postId = data.post_id || data.id;
-    } else {
-      // Fallback to text post only if no photos
-      const res = await metaFetch(`${META_API_BASE}/${d.metaPageId}/feed`, {
-        method: "POST",
-        body: JSON.stringify({
-          message: postMessage,
-          access_token: d.metaAccessToken,
-        }),
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error.message);
-      postId = data.id;
-    }
+    // Post to Facebook page
+    const res = await metaFetch(`${META_API_BASE}/${d.metaPageId}/feed`, {
+      method: "POST",
+      body: JSON.stringify({
+        message: postMessage,
+        access_token: d.metaAccessToken,
+      }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    postId = data.id;
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Error desconocido";
     await prisma.metaPublication.create({
@@ -139,105 +121,53 @@ export async function publishToFacebook(vehicleId: string, message?: string) {
   });
 }
 
-// Publish to Instagram - supports CAROUSEL (up to 10 images) for max engagement
-// IG algorithm rewards carousel posts with 3x more reach than single image
+// Publish to Instagram (requires image URL)
 export async function publishToInstagram(vehicleId: string, message?: string) {
   const d = await getDealership();
   if (!d.metaIgAccountId) throw new Error("Instagram no está vinculado");
 
   const vehicle = await prisma.vehicle.findUnique({
     where: { id: vehicleId },
-    include: { photos: { orderBy: { order: "asc" }, take: 10 } },
+    include: { photos: { orderBy: { order: "asc" } } },
   });
   if (!vehicle) throw new Error("Vehículo no encontrado");
 
-  const caption = message || buildInstagramCaption(vehicle, d);
+  const caption = message || buildVehicleMessage(vehicle);
+  const imageUrl = vehicle.photos[0]?.url;
 
-  if (!vehicle.photos.length) throw new Error("El vehículo necesita al menos una foto para publicar en Instagram");
+  if (!imageUrl) throw new Error("El vehículo necesita al menos una foto para publicar en Instagram");
 
   let postId: string | null = null;
   try {
-    if (vehicle.photos.length >= 2) {
-      // CAROUSEL post - IG algorithm strongly favors carousels
-      // Step 1: Create individual media containers for each photo
-      const childContainerIds: string[] = [];
-      for (const photo of vehicle.photos) {
-        const containerRes = await metaFetch(
-          `${META_API_BASE}/${d.metaIgAccountId}/media`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              image_url: photo.url,
-              is_carousel_item: true,
-              access_token: d.metaAccessToken,
-            }),
-          }
-        );
-        const container = await containerRes.json();
-        if (container.error) throw new Error(container.error.message);
-        childContainerIds.push(container.id);
+    // Step 1: Create media container
+    const containerRes = await metaFetch(
+      `${META_API_BASE}/${d.metaIgAccountId}/media`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          image_url: imageUrl,
+          caption,
+          access_token: d.metaAccessToken,
+        }),
       }
+    );
+    const container = await containerRes.json();
+    if (container.error) throw new Error(container.error.message);
 
-      // Step 2: Create carousel container
-      const carouselRes = await metaFetch(
-        `${META_API_BASE}/${d.metaIgAccountId}/media`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            media_type: "CAROUSEL",
-            caption,
-            children: childContainerIds,
-            access_token: d.metaAccessToken,
-          }),
-        }
-      );
-      const carousel = await carouselRes.json();
-      if (carousel.error) throw new Error(carousel.error.message);
-
-      // Step 3: Publish the carousel
-      const publishRes = await metaFetch(
-        `${META_API_BASE}/${d.metaIgAccountId}/media_publish`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            creation_id: carousel.id,
-            access_token: d.metaAccessToken,
-          }),
-        }
-      );
-      const published = await publishRes.json();
-      if (published.error) throw new Error(published.error.message);
-      postId = published.id;
-    } else {
-      // Single image post (fallback when only 1 photo)
-      const containerRes = await metaFetch(
-        `${META_API_BASE}/${d.metaIgAccountId}/media`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            image_url: vehicle.photos[0].url,
-            caption,
-            access_token: d.metaAccessToken,
-          }),
-        }
-      );
-      const container = await containerRes.json();
-      if (container.error) throw new Error(container.error.message);
-
-      const publishRes = await metaFetch(
-        `${META_API_BASE}/${d.metaIgAccountId}/media_publish`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            creation_id: container.id,
-            access_token: d.metaAccessToken,
-          }),
-        }
-      );
-      const published = await publishRes.json();
-      if (published.error) throw new Error(published.error.message);
-      postId = published.id;
-    }
+    // Step 2: Publish the container
+    const publishRes = await metaFetch(
+      `${META_API_BASE}/${d.metaIgAccountId}/media_publish`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          creation_id: container.id,
+          access_token: d.metaAccessToken,
+        }),
+      }
+    );
+    const published = await publishRes.json();
+    if (published.error) throw new Error(published.error.message);
+    postId = published.id;
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Error desconocido";
     await prisma.metaPublication.create({
@@ -306,9 +236,7 @@ export async function getMetaStatus() {
   };
 }
 
-// Facebook message: Optimized for engagement and FB algorithm
-// FB rewards: emojis, line breaks, questions/CTAs, and moderate length (150-300 chars ideal)
-function buildFacebookMessage(vehicle: {
+function buildVehicleMessage(vehicle: {
   name: string;
   brand?: string | null;
   model?: string | null;
@@ -323,180 +251,19 @@ function buildFacebookMessage(vehicle: {
   locationProvince?: string | null;
   domain?: string | null;
   description?: string | null;
-}, dealership: {
-  name?: string | null;
-  phone?: string | null;
-  city?: string | null;
-  province?: string | null;
 }) {
   const lines: string[] = [];
-
-  // Hook line - FB algorithm rewards posts that stop the scroll
-  lines.push(`🔥 NUEVA UNIDAD DISPONIBLE 🔥`);
-  lines.push("");
   lines.push(`🚗 ${vehicle.name}`);
-  lines.push("");
-
-  // Specs in a clear, scannable format
   if (vehicle.year) lines.push(`📅 Año: ${vehicle.year}`);
-  if (vehicle.kilometers != null) lines.push(`🛣️ ${vehicle.kilometers.toLocaleString("es-AR")} km`);
-  if (vehicle.fuel) {
-    const fuelMap: Record<string, string> = {
-      NAFTA: "Nafta", DIESEL: "Diésel", GNC: "GNC", ELECTRICO: "Eléctrico", HIBRIDO: "Híbrido",
-    };
-    lines.push(`⛽ ${fuelMap[vehicle.fuel] || vehicle.fuel}`);
+  if (vehicle.kilometers) lines.push(`🛣️ Km: ${vehicle.kilometers.toLocaleString("es-AR")}`);
+  if (vehicle.fuel) lines.push(`⛽ Combustible: ${vehicle.fuel}`);
+  if (vehicle.transmission) lines.push(`⚙️ Transmisión: ${vehicle.transmission}`);
+  if (vehicle.priceARS) lines.push(`💰 Precio: $${vehicle.priceARS.toLocaleString("es-AR")}`);
+  if (vehicle.priceUSD) lines.push(`💵 USD: $${vehicle.priceUSD.toLocaleString("en-US")}`);
+  if (vehicle.locationCity && vehicle.locationProvince) {
+    lines.push(`📍 ${vehicle.locationCity}, ${vehicle.locationProvince}`);
   }
-  if (vehicle.transmission) {
-    lines.push(`⚙️ ${vehicle.transmission === "MANUAL" ? "Manual" : "Automática"}`);
-  }
-  lines.push("");
-
-  // Price - prominent
-  if (vehicle.priceARS) lines.push(`💰 $${vehicle.priceARS.toLocaleString("es-AR")}`);
-  if (vehicle.priceUSD) lines.push(`💵 USD ${vehicle.priceUSD.toLocaleString("en-US")}`);
-  lines.push("");
-
-  // Benefits - triggers engagement
-  lines.push(`✅ Financiación disponible`);
-  lines.push(`✅ Aceptamos tu usado`);
-  lines.push(`✅ Garantía mecánica`);
-  lines.push("");
-
-  // Location
-  const city = vehicle.locationCity || dealership.city;
-  const province = vehicle.locationProvince || dealership.province;
-  if (city || province) {
-    lines.push(`📍 ${[city, province].filter(Boolean).join(", ")}`);
-  }
-  if (dealership.phone) lines.push(`📞 ${dealership.phone}`);
-  lines.push("");
-
-  // CTA - FB algorithm rewards posts that generate comments
-  lines.push(`💬 ¡Consultá por privado o dejá tu comentario!`);
-
-  return lines.join("\n");
-}
-
-// Instagram caption: Optimized for IG algorithm (hashtags, engagement, discoverability)
-// IG rewards: hashtags (20-25 is ideal), CTA that drives saves & shares, carousel posts
-function buildInstagramCaption(vehicle: {
-  name: string;
-  brand?: string | null;
-  model?: string | null;
-  year?: number | null;
-  version?: string | null;
-  kilometers?: number | null;
-  priceARS?: number | null;
-  priceUSD?: number | null;
-  fuel?: string | null;
-  transmission?: string | null;
-  locationCity?: string | null;
-  locationProvince?: string | null;
-  domain?: string | null;
-  description?: string | null;
-}, dealership: {
-  name?: string | null;
-  phone?: string | null;
-  city?: string | null;
-  province?: string | null;
-}) {
-  const lines: string[] = [];
-
-  // Hook line - first line is what shows in feed before "más..."
-  lines.push(`🚗 ${vehicle.name} ${vehicle.year ? `| ${vehicle.year}` : ""}`);
-  lines.push("");
-
-  // Clean, visual specs
-  const specs: string[] = [];
-  if (vehicle.year) specs.push(`📅 ${vehicle.year}`);
-  if (vehicle.kilometers != null) specs.push(`🛣️ ${vehicle.kilometers.toLocaleString("es-AR")} km`);
-  if (vehicle.fuel) {
-    const fuelMap: Record<string, string> = {
-      NAFTA: "Nafta", DIESEL: "Diésel", GNC: "GNC", ELECTRICO: "Eléctrico", HIBRIDO: "Híbrido",
-    };
-    specs.push(`⛽ ${fuelMap[vehicle.fuel] || vehicle.fuel}`);
-  }
-  if (vehicle.transmission) {
-    specs.push(`⚙️ ${vehicle.transmission === "MANUAL" ? "Manual" : "Automática"}`);
-  }
-  lines.push(specs.join("\n"));
-  lines.push("");
-
-  if (vehicle.priceARS) lines.push(`💰 $${vehicle.priceARS.toLocaleString("es-AR")}`);
-  if (vehicle.priceUSD) lines.push(`💵 USD ${vehicle.priceUSD.toLocaleString("en-US")}`);
-  lines.push("");
-
-  lines.push(`✅ Financiación | ✅ Permuta | ✅ Garantía`);
-  lines.push("");
-
-  const city = vehicle.locationCity || dealership.city;
-  const province = vehicle.locationProvince || dealership.province;
-  if (city || province) lines.push(`📍 ${[city, province].filter(Boolean).join(", ")}`);
-  if (dealership.phone) lines.push(`📲 ${dealership.phone}`);
-  lines.push("");
-
-  // CTA - IG algorithm rewards saves (guardados) and shares
-  lines.push(`💬 Consultá por DM`);
-  lines.push(`📌 Guardá este post para no perderlo`);
-  lines.push(`👥 Etiquetá a quien le pueda interesar`);
-  lines.push("");
-
-  // HASHTAGS - critical for IG discoverability
-  // Mix of high-volume (reach) + mid-volume (niche) + location-based
-  const hashtags: string[] = [];
-
-  // High volume - auto market Argentina
-  hashtags.push("#autos", "#autosusados", "#ventadeautos", "#agenciadeautos");
-  hashtags.push("#autosargentina", "#comprayventa", "#vehiculos");
-
-  // Brand-specific (high search volume on IG)
-  if (vehicle.brand) {
-    const brandTag = vehicle.brand.toLowerCase().replace(/\s+/g, "");
-    hashtags.push(`#${brandTag}`);
-    if (vehicle.model) {
-      const modelTag = vehicle.model.toLowerCase().replace(/\s+/g, "");
-      hashtags.push(`#${brandTag}${modelTag}`);
-      hashtags.push(`#${modelTag}`);
-    }
-  }
-
-  // Year-based
-  if (vehicle.year) hashtags.push(`#autos${vehicle.year}`);
-
-  // Fuel type
-  if (vehicle.fuel) {
-    const fuelTags: Record<string, string[]> = {
-      NAFTA: ["#nafta", "#naftero"],
-      DIESEL: ["#diesel", "#turbodiesel"],
-      GNC: ["#gnc", "#gnv"],
-      ELECTRICO: ["#autoelectrico", "#electrico"],
-      HIBRIDO: ["#hibrido", "#hybrid"],
-    };
-    if (fuelTags[vehicle.fuel]) hashtags.push(...fuelTags[vehicle.fuel]);
-  }
-
-  // Body type
-  if (vehicle.version) {
-    const versionTag = vehicle.version.toLowerCase().replace(/\s+/g, "");
-    hashtags.push(`#${versionTag}`);
-  }
-
-  // Location-based hashtags (crucial for local discovery)
-  if (city) {
-    const cityTag = city.toLowerCase().replace(/\s+/g, "");
-    hashtags.push(`#autos${cityTag}`, `#${cityTag}`);
-  }
-  if (province) {
-    const provTag = province.toLowerCase().replace(/\s+/g, "");
-    hashtags.push(`#autos${provTag}`);
-  }
-
-  // General engagement hashtags
-  hashtags.push("#financiacion", "#permuta", "#oportunidad");
-
-  // IG allows 30 max, sweet spot is 20-25
-  const uniqueHashtags = Array.from(new Set(hashtags)).slice(0, 25);
-  lines.push(uniqueHashtags.join(" "));
-
+  if (vehicle.description) lines.push(`\n${vehicle.description}`);
+  lines.push("\n📩 Consultá por privado o WhatsApp");
   return lines.join("\n");
 }

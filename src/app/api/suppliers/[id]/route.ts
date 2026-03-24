@@ -2,6 +2,21 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkPlanAccess } from "@/lib/plan-check";
 
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  const blocked = await checkPlanAccess("/api/suppliers");
+  if (blocked) return blocked;
+  const body = await req.json();
+  const data: Record<string, unknown> = {};
+  const allowed = ["personType", "supplierType", "supplierSubtype", "firstName", "lastName", "email", "phone", "dni", "cuit", "cuil", "sex", "province", "city", "street", "streetNumber", "observations"];
+  for (const key of allowed) {
+    if (key in body) data[key] = body[key] || null;
+  }
+  if (body.firstName) data.firstName = body.firstName;
+  if (body.lastName) data.lastName = body.lastName;
+  const supplier = await prisma.supplier.update({ where: { id: params.id }, data });
+  return NextResponse.json(supplier);
+}
+
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const blocked = await checkPlanAccess("/api/suppliers");
   if (blocked) return blocked;

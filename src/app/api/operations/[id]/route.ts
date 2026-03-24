@@ -11,6 +11,7 @@ const FULL_INCLUDE = {
       id: true, name: true, brand: true, model: true, year: true, version: true,
       domain: true, status: true, priceARS: true, priceUSD: true, currency: true,
       kilometers: true, fuel: true, color: true, transmission: true,
+      chassisNumber: true, engineNumber: true,
       photos: { select: { url: true }, take: 1 },
     },
   },

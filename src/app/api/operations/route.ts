@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   const operations = await prisma.operation.findMany({
     where,
     include: {
-      vehicle: { select: { id: true, name: true, brand: true, model: true, year: true, domain: true, status: true, priceARS: true, priceUSD: true, currency: true } },
+      vehicle: { select: { id: true, name: true, brand: true, model: true, year: true, domain: true, status: true, priceARS: true, priceUSD: true, currency: true, kilometers: true, fuel: true, color: true, transmission: true, chassisNumber: true, engineNumber: true, photos: { select: { url: true }, take: 1 } } },
       client: { select: { id: true, firstName: true, lastName: true, phone: true, email: true, dni: true } },
       supplier: { select: { id: true, firstName: true, lastName: true, phone: true } },
       steps: { orderBy: { order: "asc" }, include: { checkItems: { orderBy: { order: "asc" } } } },

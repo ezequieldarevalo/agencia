@@ -20,6 +20,21 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   return NextResponse.json(vehicle);
 }
 
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  const body = await req.json();
+  const data: Record<string, unknown> = {};
+  const allowed = ["name", "status", "category", "kilometers", "brand", "model", "year", "version", "priceARS", "priceUSD", "currency", "exchangeRate", "fuel", "color", "doors", "bodyType", "transmission", "engine", "domain", "engineNumber", "chassisNumber", "description", "locationProvince", "locationCity", "contactPhone", "notes", "published", "supplierId"];
+  for (const key of allowed) {
+    if (key in body) data[key] = body[key];
+  }
+  const vehicle = await prisma.vehicle.update({
+    where: { id: params.id },
+    data,
+    include: { photos: { orderBy: { order: "asc" } } },
+  });
+  return NextResponse.json(vehicle);
+}
+
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const body = await req.json();
   const vehicle = await prisma.vehicle.update({
