@@ -3,7 +3,7 @@
 import { Card, StatCard } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
-import { BarChart3, TrendingUp, DollarSign, Car, AlertCircle, Clock, CheckCircle2, ArrowRight, AlertTriangle, Target } from "lucide-react";
+import { BarChart3, TrendingUp, DollarSign, Car, AlertCircle, Clock, CheckCircle2, ArrowRight, AlertTriangle, Target, PlusCircle, Truck, UserCircle, FileText, Wallet, CalendarDays, Plug, ClipboardList } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -116,6 +116,31 @@ export default function DashboardPage() {
             ))}
           </select>
         </div>
+      </div>
+
+      {/* Quick Access Buttons */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+        {[
+          { href: "/dashboard/vehicles", icon: Car, label: "Inventario", color: "from-blue-500/10 to-blue-600/5 border-blue-500/20 hover:border-blue-500/40", iconColor: "text-blue-400" },
+          { href: "/dashboard/vehicles/intake/new", icon: PlusCircle, label: "Nueva Alta", color: "from-green-500/10 to-green-600/5 border-green-500/20 hover:border-green-500/40", iconColor: "text-green-400" },
+          { href: "/dashboard/suppliers", icon: Truck, label: "Proveedores", color: "from-orange-500/10 to-orange-600/5 border-orange-500/20 hover:border-orange-500/40", iconColor: "text-orange-400" },
+          { href: "/dashboard/clients", icon: UserCircle, label: "Clientes", color: "from-purple-500/10 to-purple-600/5 border-purple-500/20 hover:border-purple-500/40", iconColor: "text-purple-400" },
+          { href: "/dashboard/documents", icon: FileText, label: "Documentos", color: "from-cyan-500/10 to-cyan-600/5 border-cyan-500/20 hover:border-cyan-500/40", iconColor: "text-cyan-400" },
+          { href: "/dashboard/cash", icon: Wallet, label: "Cajas", color: "from-yellow-500/10 to-yellow-600/5 border-yellow-500/20 hover:border-yellow-500/40", iconColor: "text-yellow-400" },
+          { href: "/dashboard/reports", icon: BarChart3, label: "Reportes", color: "from-pink-500/10 to-pink-600/5 border-pink-500/20 hover:border-pink-500/40", iconColor: "text-pink-400" },
+          { href: "/dashboard/tasks", icon: ClipboardList, label: "Tareas", color: "from-indigo-500/10 to-indigo-600/5 border-indigo-500/20 hover:border-indigo-500/40", iconColor: "text-indigo-400" },
+          { href: "/dashboard/calendar", icon: CalendarDays, label: "Agenda", color: "from-teal-500/10 to-teal-600/5 border-teal-500/20 hover:border-teal-500/40", iconColor: "text-teal-400" },
+          { href: "/dashboard/integrations", icon: Plug, label: "Integraciones", color: "from-red-500/10 to-red-600/5 border-red-500/20 hover:border-red-500/40", iconColor: "text-red-400" },
+        ].map((item) => (
+          <button
+            key={item.href}
+            onClick={() => router.push(item.href)}
+            className={`flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-gradient-to-br ${item.color} border transition-colors`}
+          >
+            <item.icon size={24} className={item.iconColor} />
+            <span className="text-sm font-medium text-gray-300">{item.label}</span>
+          </button>
+        ))}
       </div>
 
       {/* Global Agency Status + Today's Operations */}

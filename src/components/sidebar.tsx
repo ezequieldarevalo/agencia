@@ -37,7 +37,7 @@ const navItems = [
   { href: "/dashboard/debts", icon: CreditCard, label: "Deudas" },
   { href: "/dashboard/leads", icon: MessageSquare, label: "Leads" },
   { href: "/dashboard/pipeline", icon: Kanban, label: "Pipeline" },
-  { href: "/dashboard/operations", icon: ClipboardList, label: "Operaciones" },
+  { href: "/dashboard/tasks", icon: ClipboardList, label: "Tareas" },
   { href: "/dashboard/documents", icon: FileText, label: "Documentos" },
   { href: "/dashboard/calendar", icon: CalendarDays, label: "Agenda" },
   { href: "/dashboard/reports", icon: BarChart3, label: "Reportes" },

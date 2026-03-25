@@ -70,6 +70,8 @@ model Client {
   waMessages      WaMessage[]
   calendarEvents  CalendarEvent[]
   operations      Operation[]
+  sellerIntakes   VehicleIntake[] @relation("SellerIntakes")
+  buyerIntakes    VehicleIntake[] @relation("BuyerIntakes")
 }
 
 model Supplier {
@@ -94,6 +96,8 @@ model Supplier {
   updatedAt       DateTime  @updatedAt
   vehicles        Vehicle[] @relation("SupplierVehicles")
   operations      Operation[]
+  intakeTasks     IntakeTask[]
+  taskExpenses    TaskExpense[]
 }
 
 model Vehicle {
@@ -138,6 +142,7 @@ model Vehicle {
   mlListings      MlListing[]
   calendarEvents  CalendarEvent[]
   operations      Operation[]
+  intakes         VehicleIntake[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 }
@@ -160,9 +165,11 @@ model CashAccount {
   initialBalance Float         @default(0)
   currentBalance Float         @default(0)
   active        Boolean        @default(true)
-  movements     CashMovement[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  movements       CashMovement[]
+  taskExpenses    TaskExpense[]
+  intakePayments  IntakePayment[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
 
 model CashMovement {
@@ -485,4 +492,88 @@ model DocumentTemplate {
   isDefault     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// Vehicle Intake: multi-step process for acquiring a vehicle
+model VehicleIntake {
+  id              String            @id @default(cuid())
+  status          String            @default("EN_CURSO") // EN_CURSO, COMPLETADO, CANCELADO
+  vehicleId       String?
+  vehicle         Vehicle?          @relation(fields: [vehicleId], references: [id])
+  sellerId        String?           // Client who sells the vehicle to us
+  seller          Client?           @relation("SellerIntakes", fields: [sellerId], references: [id])
+  purchasePrice   Float?
+  travelExpenses  Float?            @default(0)
+  salePrice       Float?
+  buyerId         String?           // Client who buys the vehicle
+  buyer           Client?           @relation("BuyerIntakes", fields: [buyerId], references: [id])
+  currency        String            @default("ARS")
+  notes           String?
+  checks          IntakeCheck[]
+  tasks           IntakeTask[]
+  payments        IntakePayment[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+// Checks for vehicle intake (vehicle condition + documents)
+model IntakeCheck {
+  id            String        @id @default(cuid())
+  intakeId      String
+  intake        VehicleIntake @relation(fields: [intakeId], references: [id], onDelete: Cascade)
+  category      String        // ESTADO (vehicle condition) or DOCUMENTO (documentation)
+  label         String
+  checked       Boolean       @default(false)
+  order         Int           @default(0)
+  tasks         IntakeTask[]  @relation("CheckTasks")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// Tasks for vehicle intake (repairs, docs, etc.)
+model IntakeTask {
+  id            String        @id @default(cuid())
+  intakeId      String
+  intake        VehicleIntake @relation(fields: [intakeId], references: [id], onDelete: Cascade)
+  checkId       String?
+  check         IntakeCheck?  @relation("CheckTasks", fields: [checkId], references: [id], onDelete: SetNull)
+  title         String
+  description   String?
+  status        String        @default("TODO") // TODO, EN_CURSO, FINALIZADA
+  dueDate       DateTime?
+  dueTime       String?       // HH:mm format, null = all day
+  rating        Int?          // 1-5 score when completed
+  supplierId    String?
+  supplier      Supplier?     @relation(fields: [supplierId], references: [id])
+  expenses      TaskExpense[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// Expenses for a task (can have multiple, each with different supplier)
+model TaskExpense {
+  id            String       @id @default(cuid())
+  taskId        String
+  task          IntakeTask   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  concept       String
+  amount        Float
+  currency      String       @default("ARS")
+  supplierId    String?
+  supplier      Supplier?    @relation(fields: [supplierId], references: [id])
+  cashAccountId String?
+  cashAccount   CashAccount? @relation(fields: [cashAccountId], references: [id])
+  createdAt     DateTime     @default(now())
+}
+
+// Payments for vehicle intake (purchase price, travel expenses, etc.)
+model IntakePayment {
+  id            String       @id @default(cuid())
+  intakeId      String
+  intake        VehicleIntake @relation(fields: [intakeId], references: [id], onDelete: Cascade)
+  concept       String       // COMPRA, VIATICO, OTRO
+  amount        Float
+  currency      String       @default("ARS")
+  cashAccountId String?
+  cashAccount   CashAccount? @relation(fields: [cashAccountId], references: [id])
+  createdAt     DateTime     @default(now())
 }

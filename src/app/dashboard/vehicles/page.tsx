@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, Pencil, Trash2, Printer, Facebook, Instagram, ShoppingBag } from "lucide-react";
-
+import { Plus, Pencil, Trash2, Printer, Facebook, Instagram, ShoppingBag, PlusCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 interface Vehicle {
   id: string;
   name: string;
@@ -75,6 +75,7 @@ const emptyForm = {
 };
 
 export default function VehiclesPage() {
+  const router = useRouter();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -250,6 +251,10 @@ export default function VehiclesPage() {
         actions={
           <div className="flex gap-2">
             <Button variant="outline" size="sm"><Printer size={16} className="mr-1" /> Imprimir</Button>
+            <Button variant="secondary" onClick={() => router.push("/dashboard/vehicles/intake/new")}>
+              <PlusCircle size={16} className="mr-2" />
+              Nueva Alta
+            </Button>
             <Button onClick={() => { setForm(emptyForm); setEditingId(null); setShowModal(true); }}>
               <Plus size={16} className="mr-2" />
               Agregar Vehículo
