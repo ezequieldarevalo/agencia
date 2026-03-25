@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Star, Trash2, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Star, Search, ChevronDown, ChevronUp } from "lucide-react";
 
 interface Task {
   id: string;
